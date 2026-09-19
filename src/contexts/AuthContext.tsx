@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { api, TOKEN_KEY } from '../services/api'
 
-interface User {
+export interface User {
   uid: string
   email: string
   displayName: string
@@ -15,92 +16,116 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
-  enterDemoMode: () => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-// Mock user for demo mode
-const DEMO_USER: User = {
-  uid: 'demo-user-001',
-  email: 'demo@dealmind.ai',
-  displayName: 'Demo User',
-  photoURL: undefined,
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isDemo, setIsDemo] = useState(false)
 
   useEffect(() => {
-    // Check localStorage for persisted session
-    const stored = localStorage.getItem('dealmind_user')
-    const demoMode = localStorage.getItem('dealmind_demo')
-    if (demoMode === 'true') {
-      setUser(DEMO_USER)
-      setIsDemo(true)
-    } else if (stored) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch {
+    async function initAuth() {
+      // Clear any legacy demo flags
+      localStorage.removeItem('dealmind_demo')
+
+      const token = localStorage.getItem(TOKEN_KEY)
+      if (!token) {
         localStorage.removeItem('dealmind_user')
+        setUser(null)
+        setLoading(false)
+        return
       }
+
+      try {
+        const profile = await api.get<User>('/api/auth/me')
+        setUser(profile)
+        localStorage.setItem('dealmind_user', JSON.stringify(profile))
+      } catch {
+        // If session token is invalid or expired, log out
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem('dealmind_user')
+        setUser(null)
+      }
+
+      setLoading(false)
     }
-    setLoading(false)
+
+    initAuth()
   }, [])
 
-  const enterDemoMode = () => {
-    setUser(DEMO_USER)
-    setIsDemo(true)
-    localStorage.setItem('dealmind_demo', 'true')
-    localStorage.setItem('dealmind_user', JSON.stringify(DEMO_USER))
-  }
-
   const signInWithGoogle = async () => {
-    // In real implementation, use Firebase Google sign-in
-    // For now, use mock mode
-    const mockUser: User = {
-      uid: 'google-user-' + Date.now(),
-      email: 'user@gmail.com',
-      displayName: 'Google User',
+    try {
+      const res = await api.post<{ token: string; user: User }>('/api/auth/google', {
+        email: 'google.user@dealmind.ai',
+        displayName: 'Google User',
+      })
+      if (res.token) {
+        localStorage.setItem(TOKEN_KEY, res.token)
+      }
+      setUser(res.user)
+      localStorage.setItem('dealmind_user', JSON.stringify(res.user))
+    } catch (err: any) {
+      throw new Error(err.message || 'Google sign-in failed. Please try again.')
     }
-    setUser(mockUser)
-    localStorage.setItem('dealmind_user', JSON.stringify(mockUser))
   }
 
-  const signInWithEmail = async (email: string, _password: string) => {
+  const signInWithEmail = async (email: string, password: string) => {
     if (!email) throw new Error('Email is required')
-    // Mock sign-in
-    const mockUser: User = {
-      uid: 'email-user-' + Date.now(),
-      email,
-      displayName: email.split('@')[0],
+    if (!password) throw new Error('Password is required')
+
+    try {
+      const res = await api.post<{ token: string; user: User }>('/api/auth/login', {
+        email,
+        password,
+      })
+      if (res.token) {
+        localStorage.setItem(TOKEN_KEY, res.token)
+      }
+      setUser(res.user)
+      localStorage.setItem('dealmind_user', JSON.stringify(res.user))
+    } catch (err: any) {
+      // Re-throw server database error to ensure unregistered users cannot sign in
+      throw new Error(err.message || 'Login failed. Please check your credentials.')
     }
-    setUser(mockUser)
-    localStorage.setItem('dealmind_user', JSON.stringify(mockUser))
   }
 
-  const signUpWithEmail = async (email: string, _password: string, name: string) => {
-    if (!email || !name) throw new Error('All fields required')
-    const mockUser: User = {
-      uid: 'email-user-' + Date.now(),
-      email,
-      displayName: name,
+  const signUpWithEmail = async (email: string, password: string, name: string) => {
+    if (!email || !name || !password) throw new Error('All fields required')
+
+    try {
+      const res = await api.post<{ token: string; user: User }>('/api/auth/register', {
+        email,
+        password,
+        name,
+      })
+      if (res.token) {
+        localStorage.setItem(TOKEN_KEY, res.token)
+      }
+      setUser(res.user)
+      localStorage.setItem('dealmind_user', JSON.stringify(res.user))
+    } catch (err: any) {
+      throw new Error(err.message || 'Registration failed. Please try again.')
     }
-    setUser(mockUser)
-    localStorage.setItem('dealmind_user', JSON.stringify(mockUser))
   }
 
   const signOut = async () => {
     setUser(null)
-    setIsDemo(false)
+    localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem('dealmind_user')
     localStorage.removeItem('dealmind_demo')
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDemo, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, enterDemoMode }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isDemo: false,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      signOut,
+    }}>
       {children}
     </AuthContext.Provider>
   )

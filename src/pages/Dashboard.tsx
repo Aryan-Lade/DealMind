@@ -65,7 +65,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
 }
 
 export default function Dashboard() {
@@ -95,7 +95,7 @@ export default function Dashboard() {
           className="dash-hero"
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as const }}
         >
           {/* Decorative blobs */}
           <div className="dash-hero-blob blob-1" />
@@ -129,7 +129,7 @@ export default function Dashboard() {
                 className="dash-feature-pill"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ delay: 0.2 + i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
                 whileHover={{ y: -3, boxShadow: '0 12px 28px rgba(0,0,0,0.1)' }}
               >
                 <span className="pill-emoji">{p.icon}</span>
@@ -305,21 +305,7 @@ export default function Dashboard() {
           </motion.div>
         </div>
 
-        {/* Demo tip */}
-        {isDemo && (
-          <motion.div
-            className="demo-tip"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Zap size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-            <div>
-              <strong>You're in Demo Mode.</strong> All features work! Data saves locally.
-              <Link to="/register" className="auth-link" style={{ marginLeft: 8 }}>Create a free account →</Link>
-            </div>
-          </motion.div>
-        )}
+
       </div>
     </AppLayout>
   )

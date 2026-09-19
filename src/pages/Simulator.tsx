@@ -51,9 +51,18 @@ export default function Simulator() {
 
   const analysis = neg?.analysis
 
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
+
   useEffect(() => {
-    if (!neg) navigate('/dashboard')
-  }, [neg, navigate])
+    const timer = setTimeout(() => {
+      setInitialCheckDone(true)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (initialCheckDone && !neg) navigate('/dashboard')
+  }, [initialCheckDone, neg, navigate])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -61,7 +70,7 @@ export default function Simulator() {
 
   useEffect(() => {
     if (neg && analysis) {
-      setCurrentUserOffer(analysis.opening_offer)
+      setCurrentUserOffer(analysis.opening_offer || neg.desiredOffer)
       setCurrentOppOffer(neg.currentOffer)
     }
   }, [neg, analysis])
@@ -146,8 +155,20 @@ export default function Simulator() {
     // Get coaching
     const coaching = await getCoachingAdvice(msg, oppResponse, analysis)
 
-    addMessage({ role: 'opponent', content: oppResponse })
-    addMessage({ role: 'coach', content: '', coaching })
+    const oppMsg = { role: 'opponent' as const, content: oppResponse }
+    const coachMsg = { role: 'coach' as const, content: '', coaching }
+    addMessage(oppMsg)
+    addMessage(coachMsg)
+
+    // Save ongoing conversation
+    const allMsgs = [...messages, userMsg, { ...oppMsg, id: Date.now().toString(), timestamp: new Date() }, { ...coachMsg, id: (Date.now() + 1).toString(), timestamp: new Date() }]
+    updateNegotiation(id!, {
+      status: 'simulating',
+      messages: allMsgs.map(m => ({
+        ...m,
+        timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : (m.timestamp || new Date().toISOString()),
+      })),
+    })
 
     // Generate suggestion
     const nextSuggestion = coaching.suggestion
@@ -172,7 +193,10 @@ export default function Simulator() {
       status: 'completed',
       score: result.score,
       finalOffer: final,
-      messages: messages.map(m => ({ ...m, timestamp: m.timestamp.toISOString() })),
+      messages: messages.map(m => ({
+        ...m,
+        timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : (m.timestamp || new Date().toISOString()),
+      })),
     })
     setPhase('finished')
     setLoading(false)

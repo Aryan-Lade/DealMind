@@ -32,33 +32,78 @@ export interface AnalysisRequest {
   relationship: string
 }
 
-async function callGeminiDirect(prompt: string): Promise<string> {
+const AVAILABLE_GEMINI_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-flash-latest',
+  'gemini-3.7-flash',
+  'gemini-3.5-flash-lite'
+]
+
+async function callGeminiDirect(
+  prompt: string,
+  modelIndex: number = 0,
+  responseMimeType?: string
+): Promise<string> {
   const key = getGeminiKey()
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.8,
-          maxOutputTokens: 2048,
-        },
-      }),
+  if (!key) throw new Error('Gemini API key is not configured')
+
+  const model = AVAILABLE_GEMINI_MODELS[modelIndex] || 'gemini-3.5-flash'
+
+  try {
+    const generationConfig: any = {
+      temperature: 0.7,
+      topP: 0.8,
+      maxOutputTokens: 8192,
     }
-  )
-  if (!response.ok) throw new Error(`Gemini API error: ${response.status}`)
-  const data = await response.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    if (responseMimeType) {
+      generationConfig.responseMimeType = responseMimeType
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig,
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      if (modelIndex + 1 < AVAILABLE_GEMINI_MODELS.length) {
+        console.warn(`Gemini model ${model} returned ${response.status}. Retrying with next model...`)
+        return callGeminiDirect(prompt, modelIndex + 1, responseMimeType)
+      }
+      throw new Error(`Gemini API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parts = data.candidates?.[0]?.content?.parts || []
+    return parts.map((p: any) => p.text || '').join('').trim()
+  } catch (err) {
+    if (modelIndex + 1 < AVAILABLE_GEMINI_MODELS.length) {
+      console.warn(`Gemini request failed on ${model}. Retrying with next model...`)
+      return callGeminiDirect(prompt, modelIndex + 1, responseMimeType)
+    }
+    throw err
+  }
 }
 
 function parseJsonFromText(text: string): any {
   // Extract JSON from markdown code blocks or raw text
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-  const jsonStr = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim()
-  return JSON.parse(jsonStr)
+  if (codeBlockMatch) {
+    return JSON.parse(codeBlockMatch[1].trim())
+  }
+  const firstBrace = text.indexOf('{')
+  const lastBrace = text.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return JSON.parse(text.slice(firstBrace, lastBrace + 1))
+  }
+  return JSON.parse(text.trim())
 }
 
 export async function analyzeNegotiation(req: AnalysisRequest): Promise<NegotiationAnalysis> {
@@ -97,7 +142,7 @@ export async function analyzeNegotiation(req: AnalysisRequest): Promise<Negotiat
     }
   }
 
-  // Direct Gemini call
+  // Direct Gemini call with full protection
   const prompt = `You are an expert negotiation strategist. Analyze the following negotiation scenario and return a JSON response.
 
 Negotiation Details:
@@ -113,42 +158,54 @@ Negotiation Details:
 - Relationship: ${req.relationship}
 - Deadline: ${req.deadline}
 
-Return ONLY a valid JSON object (no markdown) with this exact structure:
+Return ONLY a valid JSON object matching this schema:
 {
   "negotiation_type": "${req.type}",
-  "opening_offer": <number: 5-10% above desired>,
+  "opening_offer": <number: recommended opening offer>,
   "target_offer": <number: desired offer>,
   "walk_away": <number: walk-away point>,
-  "batna": <number: BATNA value if provided, else walk_away * 1.02>,
+  "batna": <number: numeric valuation of BATNA>,
   "leverage_score": <number 0-100>,
   "acceptance_probability": <number 0-1>,
   "strengths": [<array of 3-4 strength strings>],
   "weaknesses": [<array of 2-3 weakness strings>],
   "best_arguments": [
-    {"text": "<argument>", "strength": "strong|medium|weak", "reason": "<why it works>"},
-    ...
+    {"text": "<argument>", "strength": "strong|medium|weak", "reason": "<why it works>"}
   ],
   "arguments_to_avoid": [
-    {"text": "<argument>", "reason": "<why to avoid>"},
-    ...
+    {"text": "<argument>", "reason": "<why to avoid>"}
   ],
   "strategy": "<2-3 sentence negotiation strategy>",
   "recommended_counter_offer": <number>,
   "leverage_breakdown": [
-    {"factor": "<factor name>", "score": <0-100>},
-    ...
+    {"factor": "<factor name>", "score": <0-100>}
   ],
   "negotiation_summary": "<3-4 sentence summary of position and recommended approach>"
-}
+}`
 
-Important: Only include AI estimates based on user-provided information. Do not invent factual market data.`
-
-  const text = await callGeminiDirect(prompt)
   try {
-    return parseJsonFromText(text)
-  } catch {
-    // Fallback to mock if parsing fails
-    return { ...MOCK_ANALYSIS, negotiation_type: req.type, target_offer: req.desiredOffer, walk_away: req.walkAway }
+    const text = await callGeminiDirect(prompt, 0, 'application/json')
+    const parsed = parseJsonFromText(text)
+    if (parsed && typeof parsed.leverage_score === 'number') {
+      return parsed
+    }
+    throw new Error('Incomplete JSON parsed from Gemini')
+  } catch (err) {
+    console.warn('Gemini direct analysis fallback:', err)
+    const ratio = req.desiredOffer / (req.currentOffer || 1)
+    const leverageScore = Math.min(95, Math.round(65 + Math.abs(ratio - 1) * 20 + (req.batna ? 12 : 0)))
+    return {
+      ...MOCK_ANALYSIS,
+      negotiation_type: req.type,
+      opening_offer: Math.round(req.desiredOffer * 0.96),
+      target_offer: req.desiredOffer,
+      walk_away: req.walkAway,
+      batna: parseFloat(req.batna) || req.walkAway * 1.02,
+      leverage_score: leverageScore,
+      recommended_counter_offer: req.desiredOffer,
+      strategy: `Open with an anchor around ₹${Math.round(req.desiredOffer * 0.96).toLocaleString()} to establish negotiation room. Use your BATNA as a firm boundary and protect your target of ₹${req.desiredOffer.toLocaleString()}.`,
+      negotiation_summary: `Your negotiation position is supported by your BATNA. Focus on non-monetary value additions to bridge the gap from ₹${req.currentOffer.toLocaleString()} to your target.`
+    }
   }
 }
 

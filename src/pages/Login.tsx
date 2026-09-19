@@ -33,7 +33,7 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { signInWithEmail, signInWithGoogle, enterDemoMode } = useAuth()
+  const { signInWithEmail, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,10 +62,6 @@ export default function Login() {
     }
   }
 
-  const handleDemo = () => {
-    enterDemoMode()
-    navigate('/dashboard')
-  }
 
   return (
     <div className="auth-page">
@@ -94,7 +90,16 @@ export default function Login() {
 
         {/* Email Form */}
         <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="auth-error">{error}</div>}
+          {error && (
+            <div className="auth-error" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span>{error}</span>
+              {error.toLowerCase().includes('register') && (
+                <Link to="/register" style={{ color: '#FF5722', fontWeight: 600, textDecoration: 'underline' }}>
+                  Click here to Register your account &rarr;
+                </Link>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Email</label>
@@ -141,12 +146,6 @@ export default function Login() {
           <Link to="/register" className="auth-link">Create account</Link>
         </div>
 
-        <div className="auth-demo">
-          <button className="btn btn-ghost btn-sm" onClick={handleDemo}>
-            <Zap size={14} style={{ color: 'var(--accent)' }} />
-            Try Demo Mode — no account needed
-          </button>
-        </div>
       </div>
     </div>
   )

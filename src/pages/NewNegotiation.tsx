@@ -119,25 +119,6 @@ export default function NewNegotiation() {
     }, 900)
 
     try {
-      // Add negotiation to store
-      const neg = addNegotiation({
-        type: form.type,
-        title: form.title,
-        currentOffer: parseFloat(form.currentOffer),
-        desiredOffer: parseFloat(form.desiredOffer),
-        walkAway: parseFloat(form.walkAway),
-        minAcceptable: parseFloat(form.minAcceptable || form.walkAway),
-        maxDesired: parseFloat(form.maxDesired || form.desiredOffer),
-        batna: form.batna,
-        context: form.context || form.description,
-        strengths: form.strengths,
-        deadline: form.deadline,
-        otherParty: form.otherParty,
-        relationship: form.relationship,
-        status: 'draft',
-        messages: [],
-      })
-
       // Call AI analysis
       const analysis = await analyzeNegotiation({
         title: form.title,
@@ -153,15 +134,36 @@ export default function NewNegotiation() {
         relationship: form.relationship,
       })
 
+      // Add negotiation directly with analyzed status and analysis
+      const neg = addNegotiation({
+        type: form.type,
+        title: form.title,
+        currentOffer: parseFloat(form.currentOffer),
+        desiredOffer: parseFloat(form.desiredOffer),
+        walkAway: parseFloat(form.walkAway),
+        minAcceptable: parseFloat(form.minAcceptable || form.walkAway),
+        maxDesired: parseFloat(form.maxDesired || form.desiredOffer),
+        batna: form.batna,
+        context: form.context || form.description,
+        strengths: form.strengths,
+        deadline: form.deadline,
+        otherParty: form.otherParty,
+        relationship: form.relationship,
+        status: 'analyzed',
+        analysis,
+        messages: [],
+      })
+
       setLoadStep(LOADING_STEPS.length - 1)
       clearInterval(interval)
 
-      // Update with analysis
-      updateNegotiation(neg.id, { analysis, status: 'analyzed' })
-
-      setTimeout(() => navigate(`/negotiate/${neg.id}`), 600)
+      // Navigate to strategy page
+      setTimeout(() => {
+        navigate(`/negotiate/${neg.id}`)
+      }, 400)
     } catch (err: any) {
       clearInterval(interval)
+      console.error('handleAnalyze error:', err)
       setError('Analysis failed. Please try again.')
       setAnalyzing(false)
     }

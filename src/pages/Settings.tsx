@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react'
 import {
   Key, Server, Sliders, Shield, Download, Trash2, CheckCircle2,
-  AlertCircle, Eye, EyeOff, Sparkles, RefreshCw, Save
+  AlertCircle, Eye, EyeOff, Sparkles, RefreshCw, Save, Database,
+  Cloud, CloudOff, ArrowUpCircle
 } from 'lucide-react'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../contexts/AuthContext'
 import { useNegotiations } from '../contexts/NegotiationContext'
 import { DEMO_SCENARIOS, MOCK_ANALYSIS } from '../data/mockData'
+import { api } from '../services/api'
 import './Settings.css'
 
 export default function Settings() {
   const { user } = useAuth()
-  const { negotiations, addNegotiation } = useNegotiations()
+  const { negotiations, addNegotiation, syncToCloud, cloudStatus } = useNegotiations()
 
   const [geminiKey, setGeminiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
@@ -22,9 +24,25 @@ export default function Settings() {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [testMessage, setTestMessage] = useState('')
   const [saveToast, setSaveToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('Settings saved successfully!')
+
+  // Database status state
+  const [dbState, setDbState] = useState<{
+    checking: boolean
+    connected: boolean
+    error: string | null
+    preview: string
+  }>({
+    checking: true,
+    connected: false,
+    error: null,
+    preview: '',
+  })
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle')
+  const [syncMsg, setSyncMsg] = useState('')
 
   useEffect(() => {
-    const storedKey = localStorage.getItem('dealmind_gemini_key') || ''
+    const storedKey = localStorage.getItem('dealmind_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || ''
     const storedUrl = localStorage.getItem('dealmind_api_url') || ''
     const storedOpponent = localStorage.getItem('dealmind_pref_opponent') || 'professional'
     const storedCoach = localStorage.getItem('dealmind_pref_coach') || 'balanced'
@@ -35,7 +53,30 @@ export default function Settings() {
     setOpponentStyle(storedOpponent)
     setCoachingStyle(storedCoach)
     setCurrency(storedCurr)
+
+    // Check DB status
+    checkDatabaseConnection()
   }, [])
+
+  const checkDatabaseConnection = async () => {
+    setDbState(prev => ({ ...prev, checking: true }))
+    try {
+      const res = await api.checkHealth()
+      setDbState({
+        checking: false,
+        connected: res.connected,
+        error: res.error,
+        preview: res.preview || '',
+      })
+    } catch (err: any) {
+      setDbState({
+        checking: false,
+        connected: false,
+        error: err.message,
+        preview: '',
+      })
+    }
+  }
 
   const handleSave = () => {
     if (geminiKey.trim()) {
@@ -59,7 +100,7 @@ export default function Settings() {
   }
 
   const handleTestKey = async () => {
-    const key = geminiKey.trim() || localStorage.getItem('dealmind_gemini_key') || ''
+    const key = geminiKey.trim() || localStorage.getItem('dealmind_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || ''
     if (!key) {
       setTestStatus('error')
       setTestMessage('Please enter an API key first')
@@ -67,11 +108,11 @@ export default function Settings() {
     }
 
     setTestStatus('testing')
-    setTestMessage('Testing connection with Gemini 2.0 Flash...')
+    setTestMessage('Testing connection with Gemini 3.6 Flash...')
 
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      let res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -82,16 +123,46 @@ export default function Settings() {
       )
 
       if (!res.ok) {
+        res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: 'Respond with the single word: Connected' }] }],
+            }),
+          }
+        )
+      }
+
+      if (!res.ok) {
         throw new Error(`API returned HTTP ${res.status}: ${res.statusText}`)
       }
 
       const data = await res.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const parts = data.candidates?.[0]?.content?.parts || []
+      const text = parts.map((p: any) => p.text || '').join('').trim()
       setTestStatus('success')
-      setTestMessage(`Gemini verified! AI Response: "${text.trim()}"`)
+      setTestMessage(`Gemini verified! AI Response: "${text}"`)
     } catch (err: any) {
       setTestStatus('error')
       setTestMessage(err.message || 'Verification failed. Check your API key.')
+    }
+  }
+
+  const handleSyncCloud = async () => {
+    setSyncStatus('syncing')
+    setSyncMsg('Syncing all negotiations to PostgreSQL...')
+    try {
+      const count = await syncToCloud()
+      setSyncStatus('success')
+      setSyncMsg(`Successfully synced ${count} negotiations to PostgreSQL database!`)
+      setToastMessage(`Synced ${count} negotiations to cloud database!`)
+      setSaveToast(true)
+      setTimeout(() => setSaveToast(false), 3000)
+    } catch (err: any) {
+      setSyncStatus('error')
+      setSyncMsg(err.message || 'Failed to sync to database. Ensure server is running.')
     }
   }
 
@@ -111,6 +182,7 @@ export default function Settings() {
         },
       })
     })
+    setToastMessage('Demo scenarios populated!')
     setSaveToast(true)
     setTimeout(() => setSaveToast(false), 3000)
   }
@@ -138,7 +210,7 @@ export default function Settings() {
         {saveToast && (
           <div className="settings-toast">
             <CheckCircle2 size={18} color="var(--accent)" />
-            Settings saved successfully!
+            {toastMessage}
           </div>
         )}
 
@@ -146,7 +218,7 @@ export default function Settings() {
           <div>
             <h1 className="heading-lg">Settings & Configuration</h1>
             <p className="text-secondary" style={{ marginTop: 6 }}>
-              Customize your AI model, negotiation simulator, and workspace preferences.
+              Customize your AI model, PostgreSQL database persistence, and workspace preferences.
             </p>
           </div>
           <button className="btn btn-accent" onClick={handleSave}>
@@ -156,7 +228,97 @@ export default function Settings() {
         </div>
 
         <div className="settings-grid">
-          {/* Section 1: AI Provider */}
+          {/* Section 1: PostgreSQL & Railway Database */}
+          <div className="settings-card" style={{ gridColumn: '1 / -1', borderColor: dbState.connected ? 'rgba(34, 197, 94, 0.4)' : undefined }}>
+            <div className="settings-card-header">
+              <div className="settings-card-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
+                <Database size={20} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <h2 className="settings-card-title">PostgreSQL Database (Railway)</h2>
+                  {dbState.checking ? (
+                    <span className="badge badge-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <RefreshCw size={12} className="spin" /> Checking Connection...
+                    </span>
+                  ) : dbState.connected ? (
+                    <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(34, 197, 94, 0.2)', color: '#22C55E' }}>
+                      <Cloud size={13} /> Connected & Synchronized (SSL)
+                    </span>
+                  ) : (
+                    <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CloudOff size={13} /> Local Mode / Standalone
+                    </span>
+                  )}
+                </div>
+                <p className="text-secondary text-sm" style={{ marginTop: 4 }}>
+                  All negotiations, AI strategy matrices, and user chat transcripts are saved to PostgreSQL with user isolation.
+                </p>
+              </div>
+            </div>
+
+            <div className="settings-body">
+              <div className="settings-info-row">
+                <span className="text-secondary">Database Target:</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--text-primary)' }}>
+                  {dbState.preview || 'postgresql://${{PGUSER}}:${{PGPASSWORD}}@${{RAILWAY_TCP_PROXY_DOMAIN}}:${{RAILWAY_TCP_PROXY_PORT}}/${{PGDATABASE}}'}
+                </span>
+              </div>
+              <div className="settings-info-row">
+                <span className="text-secondary">Active Persistence:</span>
+                <span>
+                  {dbState.connected ? (
+                    <strong style={{ color: '#22C55E' }}>PostgreSQL Cloud Tables (users, negotiations, user_settings)</strong>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>Local Cache (Connect backend to persist in PostgreSQL)</span>
+                  )}
+                </span>
+              </div>
+              {dbState.error && (
+                <div className="settings-info-row" style={{ alignItems: 'flex-start' }}>
+                  <span className="text-secondary">Connection Note:</span>
+                  <span style={{ color: '#F59E0B', fontSize: 12 }}>{dbState.error}</span>
+                </div>
+              )}
+
+              <div className="settings-action-row" style={{ marginTop: 16 }}>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={checkDatabaseConnection}
+                  disabled={dbState.checking}
+                >
+                  <RefreshCw size={14} className={dbState.checking ? 'spin' : ''} />
+                  Test Database Connection
+                </button>
+
+                {user && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={handleSyncCloud}
+                    disabled={syncStatus === 'syncing'}
+                  >
+                    <ArrowUpCircle size={14} className={syncStatus === 'syncing' ? 'spin' : ''} />
+                    Sync Local Data to Database
+                  </button>
+                )}
+
+                {syncStatus === 'success' && (
+                  <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CheckCircle2 size={13} /> {syncMsg}
+                  </span>
+                )}
+                {syncStatus === 'error' && (
+                  <span className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <AlertCircle size={13} /> {syncMsg}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: AI Provider */}
           <div className="settings-card">
             <div className="settings-card-header">
               <div className="settings-card-icon" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
@@ -231,7 +393,7 @@ export default function Settings() {
                   <input
                     type="url"
                     className="form-input"
-                    placeholder="https://api.yourdomain.com (Leave empty for direct Gemini)"
+                    placeholder="Leave empty for local dev (proxies automatically to /api)"
                     value={apiUrl}
                     onChange={e => setApiUrl(e.target.value)}
                   />
@@ -240,7 +402,7 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Section 2: Simulator & Persona */}
+          {/* Section 3: Simulator & Persona */}
           <div className="settings-card">
             <div className="settings-card-header">
               <div className="settings-card-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
@@ -299,7 +461,7 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Section 3: User Profile & Security */}
+          {/* Section 4: User Profile & Security */}
           <div className="settings-card">
             <div className="settings-card-header">
               <div className="settings-card-icon" style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#A855F7' }}>
@@ -307,7 +469,7 @@ export default function Settings() {
               </div>
               <div>
                 <h2 className="settings-card-title">Account & Security</h2>
-                <p className="text-secondary text-sm">Your active session and privacy settings</p>
+                <p className="text-secondary text-sm">Your active session and cloud isolation</p>
               </div>
             </div>
 
@@ -321,13 +483,19 @@ export default function Settings() {
                 <span style={{ fontWeight: 600 }}>{user?.email || 'demo@dealmind.ai'}</span>
               </div>
               <div className="settings-info-row">
-                <span className="text-secondary">Privacy Mode:</span>
-                <span className="badge badge-accent">100% Client-side Local Storage</span>
+                <span className="text-secondary">User ID:</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{user?.uid || 'demo-user-001'}</span>
+              </div>
+              <div className="settings-info-row">
+                <span className="text-secondary">Data Storage:</span>
+                <span className="badge badge-accent">
+                  {dbState.connected ? 'PostgreSQL Database' : 'Client-side Local Storage'}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Section 4: Data Management */}
+          {/* Section 5: Data Management */}
           <div className="settings-card">
             <div className="settings-card-header">
               <div className="settings-card-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}>

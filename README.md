@@ -273,6 +273,11 @@ cp .env.example .env
 
 ```env
 # .env
+
+# --- Railway PostgreSQL Database ---
+DATABASE_PUBLIC_URL=postgresql://${{PGUSER}}:${{PGPASSWORD}}@${{RAILWAY_TCP_PROXY_DOMAIN}}:${{RAILWAY_TCP_PROXY_PORT}}/${{PGDATABASE}}
+
+# --- Optional Gemini API Key ---
 VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
@@ -283,14 +288,15 @@ VITE_GEMINI_API_KEY=your_gemini_api_key_here
 | Layer | Technology |
 | :--- | :--- |
 | **Framework** | React 19 + TypeScript |
+| **Database** | PostgreSQL (Railway) with automatic SSL connection |
+| **Backend API** | Node.js + Express 5 (`pg`, `bcryptjs`, `jsonwebtoken`) |
 | **Build Tool** | Vite 8 |
 | **Styling** | Vanilla CSS with custom design tokens |
-| **Animations** | Framer Motion 11 |
+| **Animations** | Framer Motion 13 |
 | **AI Engine** | Google Gemini 2.0 Flash |
 | **Charts** | Recharts |
 | **Icons** | Lucide React |
-| **Routing** | React Router v6 |
-| **Storage** | Browser localStorage |
+| **Routing** | React Router v7 |
 
 ---
 
@@ -302,23 +308,3 @@ npm run preview
 ```
 
 ---
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-```
-  ╔══════════════════════════════════════════════════╗
-  ║   Built with ⚡ by Aryan Lade                    ║
-  ║   Powered by 🤖 Google Gemini 2.0 Flash          ║
-  ║   Designed with the Hanzo aesthetic              ║
-  ╚══════════════════════════════════════════════════╝
-```
-
-**[⭐ Star this repo](https://github.com/Aryan-Lade/DealMind-)** if DealMind helped you win a negotiation!
-
-</div>

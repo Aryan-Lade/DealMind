@@ -34,7 +34,7 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { signUpWithEmail, signInWithGoogle, enterDemoMode } = useAuth()
+  const { signUpWithEmail, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,7 +86,16 @@ export default function Register() {
         <div className="auth-divider"><span>or sign up with email</span></div>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="auth-error">{error}</div>}
+          {error && (
+            <div className="auth-error" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span>{error}</span>
+              {error.toLowerCase().includes('already exists') && (
+                <Link to="/login" style={{ color: '#FF5722', fontWeight: 600, textDecoration: 'underline' }}>
+                  Click here to Sign In &rarr;
+                </Link>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Full Name</label>
@@ -128,12 +137,6 @@ export default function Register() {
           <Link to="/login" className="auth-link">Sign in</Link>
         </div>
 
-        <div className="auth-demo">
-          <button className="btn btn-ghost btn-sm" onClick={() => { enterDemoMode(); navigate('/dashboard') }}>
-            <Zap size={14} style={{ color: 'var(--accent)' }} />
-            Try Demo Mode — no account needed
-          </button>
-        </div>
       </div>
     </div>
   )

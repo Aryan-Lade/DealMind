@@ -109,7 +109,7 @@ export default function SimulatorHub() {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 24 },
-    show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] } }),
+    show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } }),
   }
 
   const DIFFICULTY_STYLE: Record<string, { color: string; bg: string }> = {
@@ -127,7 +127,7 @@ export default function SimulatorHub() {
           className="simhub-hero"
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] as const }}
         >
           <div className="simhub-blob blob-1" />
           <div className="simhub-blob blob-2" />

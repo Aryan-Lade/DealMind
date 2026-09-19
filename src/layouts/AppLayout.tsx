@@ -86,9 +86,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* User */}
       <div className="sidebar-user">
-        {isDemo && !collapsed && (
-          <div className="sidebar-demo-badge">⚡ Demo Mode</div>
-        )}
         <div className="sidebar-user-info">
           <div className="sidebar-avatar">
             {user?.displayName?.[0]?.toUpperCase() || 'U'}
@@ -119,7 +116,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <span className="navbar-logo-icon"><Zap size={13} /></span>
           DealMind
         </Link>
-        {isDemo && <span className="badge badge-accent" style={{ fontSize: 10 }}>Demo</span>}
       </header>
 
       {/* Mobile overlay */}

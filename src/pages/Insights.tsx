@@ -14,7 +14,7 @@ const COLORS = ['#FF5722', '#38BDF8', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
 }
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -111,7 +111,7 @@ export default function Insights() {
           className="insights-hero"
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] as const }}
         >
           <div className="insights-hero-blob blob-a" />
           <div className="insights-hero-blob blob-b" />

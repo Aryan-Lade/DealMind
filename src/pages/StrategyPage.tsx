@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Target, TrendingDown, Shield, Zap, ArrowRight,
@@ -36,11 +36,20 @@ export default function StrategyPage() {
   const { getById } = useNegotiations()
   const navigate = useNavigate()
   const neg = id ? getById(id) : null
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
 
   useEffect(() => {
-    if (!neg) navigate('/dashboard')
-    else if (neg.status === 'draft') navigate(`/negotiate/new`)
-  }, [neg, navigate])
+    const timer = setTimeout(() => {
+      setInitialCheckDone(true)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (initialCheckDone && !neg) {
+      navigate('/dashboard')
+    }
+  }, [initialCheckDone, neg, navigate])
 
   if (!neg || !neg.analysis) {
     return (

@@ -88,14 +88,17 @@ const FAQS = [
 ]
 
 export default function Landing() {
-  const { enterDemoMode } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [pricingPeriod, setPricingPeriod] = useState<'free' | 'pro'>('free')
 
-  const handleLaunchDemo = () => {
-    enterDemoMode()
-    navigate('/dashboard')
+  const handleAction = () => {
+    if (user) {
+      navigate('/dashboard')
+    } else {
+      navigate('/register')
+    }
   }
 
   // Motion variants
@@ -142,11 +145,11 @@ export default function Landing() {
             <Link to="/login" className="btn btn-ghost btn-sm">Sign In</Link>
             <motion.button
               className="btn btn-dark btn-sm"
-              onClick={handleLaunchDemo}
+              onClick={handleAction}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
-              Try Demo <ArrowRight size={13} className="btn-arrow" />
+              Get Started <ArrowRight size={13} className="btn-arrow" />
             </motion.button>
           </div>
         </div>
@@ -219,7 +222,7 @@ export default function Landing() {
           >
             <motion.button
               className="btn btn-dark btn-lg"
-              onClick={handleLaunchDemo}
+              onClick={handleAction}
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -534,7 +537,7 @@ export default function Landing() {
             </div>
             <motion.button
               className="btn btn-dark"
-              onClick={handleLaunchDemo}
+              onClick={handleAction}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -654,7 +657,7 @@ export default function Landing() {
                 <motion.button
                   className="btn btn-accent btn-lg"
                   style={{ width: '100%', marginTop: 28 }}
-                  onClick={handleLaunchDemo}
+                  onClick={handleAction}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -689,7 +692,7 @@ export default function Landing() {
               <motion.button
                 className="btn btn-dark"
                 style={{ width: '100%', marginBottom: 14 }}
-                onClick={handleLaunchDemo}
+                onClick={handleAction}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -759,7 +762,7 @@ export default function Landing() {
 
             <motion.button
               className="btn btn-accent btn-lg footer-cta"
-              onClick={handleLaunchDemo}
+              onClick={handleAction}
               whileHover={{ scale: 1.05, y: -3 }}
               whileTap={{ scale: 0.97 }}
             >

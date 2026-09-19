@@ -31,7 +31,6 @@ export default function Navbar() {
         <Link to="/" className="navbar-logo">
           <span className="navbar-logo-icon"><Zap size={16} /></span>
           <span className="navbar-logo-text">DealMind</span>
-          {isDemo && <span className="demo-tag">Demo</span>}
         </Link>
 
         {/* Desktop Nav Links */}

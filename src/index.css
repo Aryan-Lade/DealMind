@@ -26,19 +26,19 @@
   --canvas-dark-border: rgba(255, 255, 255, 0.08);
   --canvas-dark-border-hover: rgba(255, 255, 255, 0.16);
 
-  /* Primary App Context (Dark Luxury by default for app workspace, Light/Dark dual for landing) */
-  --bg-primary: #0B0C0F;
-  --bg-secondary: #121318;
-  --bg-card: #16171E;
-  --bg-card-hover: #1E202A;
-  --bg-elevated: #242633;
-  --bg-input: #101116;
+  /* Primary App Context — Light Hanzo Canvas (matches landing page aesthetic) */
+  --bg-primary: #E7E8EB;
+  --bg-secondary: #F4F4F6;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F8FA;
+  --bg-elevated: #EDEDF0;
+  --bg-input: #FFFFFF;
 
-  /* Typography Colors */
-  --text-primary: #FFFFFF;
-  --text-secondary: #9FA1AC;
-  --text-muted: #656775;
-  --text-inverse: #0B0C0F;
+  /* Typography Colors — Light Mode */
+  --text-primary: #0A0A0E;
+  --text-secondary: #5A5C6A;
+  --text-muted: #9EA0AC;
+  --text-inverse: #FFFFFF;
   --text-dark: #0A0A0E;
   --text-dark-secondary: #6B6D7A;
   --text-dark-muted: #9EA0AC;
@@ -53,10 +53,10 @@
   --accent-dim: rgba(255, 87, 34, 0.12);
   --accent-glow: rgba(255, 87, 34, 0.28);
 
-  /* Semantic UI Colors */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
+  /* Semantic UI Colors — Light Mode */
+  --border: rgba(10, 10, 14, 0.10);
+  --border-color: rgba(10, 10, 14, 0.10);
+  --border-hover: rgba(10, 10, 14, 0.20);
   --border-accent: rgba(255, 87, 34, 0.35);
 
   --success: #10B981;
@@ -80,10 +80,10 @@
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.09);
   --shadow-accent: 0 0 30px rgba(255, 87, 34, 0.22);
-  --shadow-dark: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-dark: 0 20px 60px rgba(0, 0, 0, 0.12);
 
   /* Transitions */
   --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -103,6 +103,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.5;
+  background-image: radial-gradient(circle, rgba(10,10,14,0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* ============================================================
@@ -260,7 +262,7 @@ body {
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(10, 10, 14, 0.04);
   border-color: var(--border-hover);
 }
 
@@ -272,7 +274,7 @@ body {
 
 .btn-ghost:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(10, 10, 14, 0.05);
 }
 
 .btn-danger {
@@ -333,7 +335,7 @@ body {
 }
 
 .badge-outline {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(10, 10, 14, 0.04);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }

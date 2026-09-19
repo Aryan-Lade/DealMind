@@ -25,25 +25,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function DemoBanner() {
-  const { isDemo } = useAuth()
-  if (!isDemo) return null
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001,
-      background: 'var(--accent)', color: '#FFFFFF', textAlign: 'center',
-      padding: '6px 16px', fontSize: 12, fontWeight: 700, letterSpacing: '0.05em',
-    }}>
-      ⚡ DEMO MODE — Using mock AI responses. All features work! Data saves locally.
-    </div>
-  )
-}
+
 
 function AppContent() {
-  const { isDemo } = useAuth()
   return (
-    <div style={isDemo ? { paddingTop: 32 } : {}}>
-      <DemoBanner />
+    <div>
       <Routes>
         {/* Public */}
         <Route path="/" element={<Landing />} />

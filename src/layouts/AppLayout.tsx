@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Plus, FileText, MessageSquare,
   BarChart2, Settings, Zap, LogOut, ChevronLeft, ChevronRight, Menu
@@ -41,7 +42,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {!collapsed && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span className="sidebar-logo-text">DealMind</span>
-              <span className="badge badge-outline" style={{ fontSize: 9, padding: '1px 5px' }}>v2.0</span>
+              <span className="sidebar-version-pill">v2.0</span>
             </div>
           )}
         </Link>
@@ -52,19 +53,36 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Nav */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map(item => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`sidebar-link ${location.pathname === item.path ? 'sidebar-link-active' : ''}`}
-            title={collapsed ? item.label : undefined}
-            onClick={() => setMobileOpen(false)}
-          >
-            <item.icon size={18} />
-            {!collapsed && <span>{item.label}</span>}
-          </Link>
-        ))}
+        {NAV_ITEMS.map(item => {
+          const isActive = location.pathname === item.path ||
+            (item.path !== '/dashboard' && location.pathname.startsWith(item.path))
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+              title={collapsed ? item.label : undefined}
+              onClick={() => setMobileOpen(false)}
+            >
+              <span className="sidebar-link-icon">
+                <item.icon size={17} />
+              </span>
+              {!collapsed && <span className="sidebar-link-label">{item.label}</span>}
+              {!collapsed && isActive && <span className="sidebar-active-dot" />}
+            </Link>
+          )
+        })}
       </nav>
+
+      {/* CTA if not collapsed */}
+      {!collapsed && (
+        <div className="sidebar-cta">
+          <button className="sidebar-cta-btn" onClick={() => navigate('/negotiate/new')}>
+            <Plus size={14} />
+            New Negotiation
+          </button>
+        </div>
+      )}
 
       {/* User */}
       <div className="sidebar-user">
@@ -83,7 +101,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
           )}
         </div>
         <button className="sidebar-signout" onClick={handleSignOut} title="Sign out">
-          <LogOut size={16} />
+          <LogOut size={15} />
+          {!collapsed && <span>Sign out</span>}
         </button>
       </div>
     </aside>
@@ -104,13 +123,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="mobile-overlay" onClick={() => setMobileOpen(false)}>
-          <div className="mobile-sidebar" onClick={e => e.stopPropagation()}>
-            <Sidebar />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            className="mobile-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileOpen(false)}
+          >
+            <motion.div
+              className="mobile-sidebar"
+              initial={{ x: -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: -260 }}
+              transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <Sidebar />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="app-body">
         <div className="desktop-sidebar">

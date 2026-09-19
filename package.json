@@ -1,7 +1,9 @@
 {
-  "name": "cfc",
+  "name": "dealmind",
+  "description": "DealMind — AI Negotiation Strategist & Simulator powered by Google Gemini and Game Theory",
+  "homepage": "https://dealmind-hazel.vercel.app",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently -n \"VITE,API\" -c \"cyan,green\" \"vite\" \"node server/index.js\"",

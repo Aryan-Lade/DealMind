@@ -171,10 +171,3 @@ npm run preview
 
 ---
 
-## 📄 License
-
-Distributed under the **MIT License**. See `LICENSE` for more information.
-
-<div align="center">
-  <sub>Built with ❤️ by <a href="https://github.com/Aryan-Lade">Aryan Lade</a></sub>
-</div>

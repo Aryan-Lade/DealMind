@@ -1,0 +1,176 @@
+.simhub-page {
+  padding: 36px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.simhub-hero {
+  background: radial-gradient(circle at top left, rgba(204, 255, 0, 0.08) 0%, transparent 60%),
+              var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 36px 40px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.simhub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(204, 255, 0, 0.1);
+  border: 1px solid rgba(204, 255, 0, 0.25);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.simhub-title {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.simhub-subtitle {
+  max-width: 720px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.simhub-section {
+  margin-bottom: 44px;
+}
+
+.simhub-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.simhub-active-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.simhub-active-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.simhub-active-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.simhub-active-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.simhub-active-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.simhub-active-numbers {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.simhub-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 20px;
+}
+
+.simhub-preset-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.simhub-preset-card:hover {
+  border-color: rgba(204, 255, 0, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
+
+.simhub-preset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.simhub-preset-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simhub-preset-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.simhub-preset-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  flex: 1;
+  margin-bottom: 18px;
+}
+
+.simhub-preset-metrics {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.simhub-preset-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (max-width: 768px) {
+  .simhub-page {
+    padding: 20px 16px;
+  }
+  .simhub-hero {
+    padding: 24px 20px;
+  }
+  .simhub-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

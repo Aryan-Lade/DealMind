@@ -1,0 +1,119 @@
+.insights-page {
+  padding: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.insights-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.insight-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.is-val {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.is-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.insights-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.chart-wide {
+  grid-column: 1 / -1;
+}
+
+.chart-tooltip {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+/* Table */
+.insights-table {}
+
+.it-header, .it-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 80px;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 13px;
+  align-items: center;
+}
+
+.it-header {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.it-row {
+  border-bottom: 1px solid var(--border);
+}
+
+.it-row:last-child { border-bottom: none; }
+
+.it-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.it-type {
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.score-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+  .insights-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .insights-page { padding: 16px; }
+  .insights-charts { grid-template-columns: 1fr; }
+  .chart-wide { grid-column: 1; }
+  .it-header, .it-row { grid-template-columns: 1fr 1fr 80px; }
+  .it-header span:nth-child(2), .it-row span:nth-child(2),
+  .it-header span:nth-child(3), .it-row span:nth-child(3) { display: none; }
+}

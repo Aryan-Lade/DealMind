@@ -1,0 +1,252 @@
+.strategy-page {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.strategy-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.strategy-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+
+/* Metrics row */
+.strategy-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.strategy-metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.strategy-metric-card:hover { border-color: var(--border-hover); }
+
+.sm-target { border-top: 2px solid var(--accent); }
+.sm-opening { border-top: 2px solid #3B82F6; }
+.sm-walkaway { border-top: 2px solid #EF4444; }
+.sm-batna { border-top: 2px solid #8B5CF6; }
+
+.sm-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: var(--text-secondary);
+}
+
+.sm-val {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.sm-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Body layout */
+.strategy-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.strategy-left, .strategy-right {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Leverage card */
+.strategy-leverage-card {}
+
+.leverage-top {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.prog-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.prog-ring-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.prog-ring-val {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.prog-ring-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.leverage-breakdown {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lev-item {}
+.lev-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+/* Strategy details */
+.strategy-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.sd-item {
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sd-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sd-val {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Arguments */
+.arg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arg-item {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.arg-good {
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.arg-bad {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.arg-top { margin-bottom: 8px; }
+
+/* Position grid */
+.pos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pos-item {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.pos-strong {
+  background: rgba(34,197,94,0.08);
+  color: var(--success);
+}
+
+.pos-weak {
+  background: rgba(245,158,11,0.08);
+  color: var(--warning);
+}
+
+/* CTA */
+.strategy-cta {
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 20px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 0 40px rgba(204,255,0,0.05);
+}
+
+.strategy-cta h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+/* Loading */
+.strategy-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .strategy-metrics { grid-template-columns: repeat(2, 1fr); }
+  .strategy-body { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .strategy-page { padding: 16px; }
+  .strategy-cta { flex-direction: column; text-align: center; }
+  .leverage-top { flex-direction: column; align-items: center; }
+}

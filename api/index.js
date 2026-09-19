@@ -18,12 +18,22 @@ app.use(express.json({ limit: '10mb' }));
 // Database initialization middleware for serverless cold starts
 let dbInitPromise = null;
 app.use(async (req, res, next) => {
-  if (!dbInitPromise) {
-    dbInitPromise = initDb().catch(err => {
-      console.error('Serverless DB init error:', err);
-    });
+  try {
+    if (!dbInitPromise) {
+      dbInitPromise = initDb().catch(err => {
+        console.error('Serverless DB init error:', err);
+        dbInitPromise = null;
+        return false;
+      });
+    }
+    const success = await dbInitPromise;
+    if (!success) {
+      dbInitPromise = null; // Allow retry on subsequent requests
+    }
+  } catch (err) {
+    dbInitPromise = null;
+    console.error('Database initialization middleware error:', err);
   }
-  await dbInitPromise;
   next();
 });
 

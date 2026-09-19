@@ -2,6 +2,7 @@ import pg from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { DatabaseSync } from 'node:sqlite';
 
@@ -15,7 +16,11 @@ dotenv.config();
 const { Pool } = pg;
 
 export function resolvePostgresConfig() {
-  let rawUrl = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL || '';
+  let rawUrl = (process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL || '').trim();
+
+  // Strip accidental wrapping quotes or parentheses (e.g. copied from markdown "(postgresql://...)" or quotes)
+  rawUrl = rawUrl.replace(/^[("'\s]+|[)"';\s]+$/g, '').trim();
+
   const hasPlaceholders = rawUrl.includes('${{');
 
   if (hasPlaceholders) {
@@ -27,24 +32,32 @@ export function resolvePostgresConfig() {
       replaced.includes('@:/') ||
       replaced.includes('://@') ||
       replaced.includes('://:') ||
-      replaced.endsWith('@/');
+      replaced.endsWith('@/') ||
+      replaced.includes('${{');
 
     if (isUnresolved) {
       return {
         configured: false,
         connectionString: null,
         displayPreview: rawUrl,
+        reason: 'Unresolved template placeholders in URL',
       };
     }
 
+    rawUrl = replaced;
+  }
+
+  // Check if rawUrl still contains literal ':PORT' (common copy-paste mistake from Railway template)
+  if (rawUrl && (rawUrl.includes(':PORT/') || rawUrl.includes(':PORT') || /:PORT\b/i.test(rawUrl))) {
     return {
-      configured: true,
-      connectionString: replaced,
-      displayPreview: replaced.replace(/:[^:@]+@/, ':****@'),
+      configured: false,
+      connectionString: null,
+      displayPreview: rawUrl,
+      reason: "Placeholder ':PORT' found in URL. Please replace with the actual numeric port from Railway or your PostgreSQL provider.",
     };
   }
 
-  if (rawUrl && rawUrl.startsWith('postgres')) {
+  if (rawUrl && (rawUrl.startsWith('postgres://') || rawUrl.startsWith('postgresql://'))) {
     return {
       configured: true,
       connectionString: rawUrl,
@@ -72,6 +85,7 @@ export function resolvePostgresConfig() {
     configured: false,
     connectionString: null,
     displayPreview: 'postgresql://${{PGUSER}}:${{PGPASSWORD}}@${{RAILWAY_TCP_PROXY_DOMAIN}}:${{RAILWAY_TCP_PROXY_PORT}}/${{PGDATABASE}}',
+    reason: 'No PostgreSQL connection string configured.',
   };
 }
 
@@ -80,19 +94,39 @@ let pgPool = null;
 let sqliteDb = null;
 let lastDbError = null;
 
-const pgConfig = resolvePostgresConfig();
-
 // Initialize SQLite fallback database
 function getSqliteDb() {
   if (sqliteDb) return sqliteDb;
 
-  const dataDir = path.resolve(__dirname, 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  let dbPath;
+  const isServerless = Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.LAMBDA_TASK_ROOT
+  );
+
+  if (isServerless) {
+    // In serverless environments, only /tmp (os.tmpdir()) is writable
+    dbPath = path.join(os.tmpdir(), 'dealmind.db');
+  } else {
+    try {
+      const dataDir = path.resolve(__dirname, 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      dbPath = path.join(dataDir, 'dealmind.db');
+    } catch (err) {
+      console.warn('⚠️ Could not create data directory, using temp directory:', err.message);
+      dbPath = path.join(os.tmpdir(), 'dealmind.db');
+    }
   }
 
-  const dbPath = path.join(dataDir, 'dealmind.db');
-  sqliteDb = new DatabaseSync(dbPath);
+  try {
+    sqliteDb = new DatabaseSync(dbPath);
+  } catch (err) {
+    console.warn(`⚠️ Failed to open SQLite at ${dbPath}, falling back to in-memory:`, err.message);
+    sqliteDb = new DatabaseSync(':memory:');
+  }
 
   // Initialize SQLite tables
   sqliteDb.exec(`
@@ -150,26 +184,30 @@ function getSqliteDb() {
 }
 
 export async function initDb() {
+  const pgConfig = resolvePostgresConfig();
+
   // If PostgreSQL is configured with real credentials, try connecting to it
   if (pgConfig.configured && pgConfig.connectionString) {
     try {
       const isLocal = pgConfig.connectionString.includes('localhost') || pgConfig.connectionString.includes('127.0.0.1');
       const useSsl = !isLocal || process.env.PGSSL === 'true';
 
-      pgPool = new Pool({
-        connectionString: pgConfig.connectionString,
-        ssl: useSsl ? { rejectUnauthorized: false } : false,
-        max: 10,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
-      });
+      if (!pgPool) {
+        pgPool = new Pool({
+          connectionString: pgConfig.connectionString,
+          ssl: useSsl ? { rejectUnauthorized: false } : false,
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 7000,
+        });
 
-      pgPool.on('error', (err) => {
-        console.warn('⚠️ Unexpected error on idle PostgreSQL client:', err.message);
-      });
+        pgPool.on('error', (err) => {
+          console.warn('⚠️ Unexpected error on idle PostgreSQL client:', err.message);
+        });
+      }
 
       const client = await pgPool.connect();
-      console.log('✅ Connected to Railway PostgreSQL database successfully!');
+      console.log('✅ Connected to PostgreSQL database successfully!');
 
       // PostgreSQL Schema
       await client.query(`
@@ -227,36 +265,42 @@ export async function initDb() {
       console.log('✅ PostgreSQL tables verified and active!');
       return true;
     } catch (err) {
-      console.warn('⚠️ Railway PostgreSQL connection failed:', err.message);
+      console.warn('⚠️ PostgreSQL connection failed:', err.message);
       lastDbError = err.message;
-      pgPool = null;
+      if (pgPool) {
+        try { await pgPool.end(); } catch { /* ignore */ }
+        pgPool = null;
+      }
     }
+  } else if (pgConfig.reason) {
+    lastDbError = pgConfig.reason;
   }
 
-  // Use persistent local database engine
+  // Use persistent local database engine fallback
   try {
     getSqliteDb();
     activeEngine = 'sqlite';
-    console.log('✅ Database Engine active: Persistent SQL Database (Local/Dev)');
-    if (!pgConfig.configured) {
-      console.log('ℹ️ Railway URL template present. When you add real Railway credentials to .env (or deploy to Railway), it will automatically switch to PostgreSQL.');
-    }
+    console.log('✅ Database Engine active: SQLite Database (Fallback/Serverless)');
     return true;
   } catch (err) {
-    console.error('❌ Failed to initialize database:', err);
+    console.error('❌ Failed to initialize SQLite database fallback:', err);
     lastDbError = err.message;
     return false;
   }
 }
 
 export function getDbStatus() {
+  const pgConfig = resolvePostgresConfig();
   return {
     connected: activeEngine !== 'none',
     engine: activeEngine,
     description: activeEngine === 'postgresql'
-      ? 'Connected to Railway PostgreSQL (Cloud)'
-      : 'Active: Persistent Local Database (Disk-persisted, user isolated)',
+      ? 'Connected to PostgreSQL (Cloud)'
+      : (activeEngine === 'sqlite'
+          ? (process.env.VERCEL ? 'Active: Ephemeral Serverless SQLite (Configure PostgreSQL for permanent persistence)' : 'Active: Persistent Local Database')
+          : 'Database Disconnected'),
     connectionStringPreview: pgConfig.displayPreview,
+    configStatus: pgConfig.configured ? 'Configured' : (pgConfig.reason || 'Not configured'),
     error: lastDbError,
   };
 }
@@ -267,6 +311,10 @@ export function getDbStatus() {
  * Converts Postgres $1, $2 parameter placeholders to SQLite ? placeholders automatically.
  */
 export async function query(sql, params = []) {
+  if (activeEngine === 'none') {
+    await initDb();
+  }
+
   if (activeEngine === 'postgresql' && pgPool) {
     return pgPool.query(sql, params);
   }
@@ -348,7 +396,7 @@ export async function query(sql, params = []) {
     }
   }
 
-  throw new Error('Database is not initialized. Call initDb() first.');
+  throw new Error(`Database is not initialized. (Engine: ${activeEngine}, Last Error: ${lastDbError || 'Please check database credentials or network connection.'})`);
 }
 
 function normalizeRow(row) {

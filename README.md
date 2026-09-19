@@ -1,29 +1,40 @@
 <div align="center">
 
-# ⚡ DealMind — AI Negotiation Strategist & Simulator
+```
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║    ██████╗ ███████╗ █████╗ ██╗     ███╗   ███╗██╗███╗   ██╗██████╗  ║
+║    ██╔══██╗██╔════╝██╔══██╗██║     ████╗ ████║██║████╗  ██║██╔══██╗ ║
+║    ██║  ██║█████╗  ███████║██║     ██╔████╔██║██║██╔██╗ ██║██║  ██║ ║
+║    ██║  ██║██╔══╝  ██╔══██║██║     ██║╚██╔╝██║██║██║╚██╗██║██║  ██║ ║
+║    ██████╔╝███████╗██║  ██║███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝ ║
+║    ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝  ║
+║                                                                      ║
+║            AI Negotiation Strategist & Simulator v2.0               ║
+╚══════════════════════════════════════════════════════════════════════╝
+```
 
 <p align="center">
-  <strong>Master high-stakes negotiations before they happen.</strong><br>
-  Roleplay against adaptive AI counterparties with live tactical coaching, anchor recommendations, and concession tracking.
+  <strong>Master high-stakes negotiations before they happen.</strong><br/>
+  Roleplay against adaptive AI counterparties with live tactical coaching,<br/>
+  anchor recommendations, and real-time concession tracking.
 </p>
+
+<br/>
 
 [![React 19](https://img.shields.io/badge/React-19.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Google Gemini](https://img.shields.io/badge/Gemini_2.0-Flash-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
-[![License MIT](https://img.shields.io/badge/License-MIT-CCFF00?style=for-the-badge&logoColor=black)](LICENSE)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-11-0055FF?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
+[![License MIT](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](LICENSE)
 
 <br/>
 
-<!-- Hero Screenshot -->
-<img src="./docs/screenshots/landing.png" alt="DealMind Hero Screen" width="100%" style="border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);" />
-
-<br/><br/>
-
-[🚀 Key Features](#-key-features) •
-[📸 Visual Walkthrough](#-visual-walkthrough) •
+[🚀 Features](#-key-features) •
 [🏗️ Architecture](#-system-architecture) •
 [⚡ Quick Start](#-quick-start) •
+[🎯 Scenarios](#-practice-scenarios) •
 [⚙️ Configuration](#-configuration)
 
 </div>
@@ -32,74 +43,183 @@
 
 ## 🌟 What is DealMind?
 
-Negotiating a **salary hike**, **apartment lease renewal**, **freelance project rate**, or **enterprise vendor contract** is intimidating without preparation. Most people concede too early or fail to anchor their numbers effectively.
+Negotiating a **salary hike**, **apartment lease**, **freelance rate**, or **enterprise contract** is stressful without preparation. Most people concede too early, anchor too low, or crumble under pressure.
 
-**DealMind** bridges that gap. It combines **game theory**, **BATNA calculations**, and **Google Gemini 2.0 Flash** into an immersive, private preparation platform:
+**DealMind** bridges that gap. It combines **game theory**, **BATNA calculations**, and **Google Gemini 2.0 Flash** into a private, immersive preparation platform that works entirely in your browser.
 
-- **Quantify Your Leverage**: Understand your true bargaining power before entering discussions.
-- **Roleplay with AI**: Converse with counterparty personas (Professional, Collaborative, Firm, Aggressive).
-- **In-Flight AI Coaching**: Receive instant alerts if you make premature concessions or emotional statements.
-- **Zero Friction**: Practice immediately in **Demo Mode** or plug in your personal Gemini API key.
+```
+                     ┌─────────────────────────────────────────┐
+                     │         THE DEALMIND ADVANTAGE          │
+                     ├──────────────────┬──────────────────────┤
+                     │  BEFORE          │  WITH DEALMIND        │
+                     ├──────────────────┼──────────────────────┤
+                     │  Gut feeling     │  Data-backed strategy │
+                     │  Guess anchors   │  AI-optimized anchors │
+                     │  No BATNA        │  Quantified walk-away │
+                     │  Unprepared      │  Pre-simulated rounds │
+                     │  Single approach │  4 AI persona styles  │
+                     └──────────────────┴──────────────────────┘
+```
 
 ---
 
 ## 🚀 Key Features
 
-| Feature | Description |
+| Feature | What it does |
 | :--- | :--- |
-| 🎯 **Strategy Engine** | Calculates opening anchors, target numbers, walk-away boundaries, and acceptance probabilities. |
-| 🎭 **Simulation Arena** | Live conversation simulator simulating realistic counter-offers, pushbacks, and tactical trade-offs. |
-| 🧠 **Real-Time Executive Coach** | Micro-coaching on every move: identifies early concessions, BATNA references, and anchor adherence. |
-| ⚡ **1-Click Practice Scenarios** | Ready-to-run presets for Salary, Apartment Lease, High-Ticket Retainers, and SaaS Contracts. |
-| 📊 **Analytics & Scoring** | Tracks historical performance grades, concession frequency, and target achievement percentages. |
-| 🔒 **100% Client-Side Privacy** | API keys and negotiation data remain stored securely in your browser's `localStorage`. |
-
----
-
-## 📸 Visual Walkthrough
-
-### 1. 🎛️ Negotiation Command Center
-View your preparation readiness, historical performance scores, and ongoing negotiations in one sleek dashboard.
-
-<img src="./docs/screenshots/dashboard.png" alt="Dashboard" width="100%" style="border-radius: 10px;" />
-
----
-
-### 2. ⚡ Practice Arena & Instant Presets
-Jump into curated roleplay simulations in 1 click without manual configuration, or select from your active custom negotiations.
-
-<img src="./docs/screenshots/simulator-hub.png" alt="Simulator Hub" width="100%" style="border-radius: 10px;" />
-
----
-
-### 3. 💬 Live Simulation with Real-Time AI Coaching
-Roleplay against dynamic AI counterparties. On every message, the AI Coach assesses your tactics, warns against premature concessions, and gives recommended next steps.
-
-<img src="./docs/screenshots/simulation-arena.png" alt="Live Simulation Arena" width="100%" style="border-radius: 10px;" />
-
----
-
-### 4. ⚙️ AI Settings & Live Key Verification
-Directly input your **Google Gemini API Key** and verify live connectivity with Gemini 2.0 Flash in real time. Adjust counterparty temperament, coaching aggressiveness, and currency preferences.
-
-<img src="./docs/screenshots/settings.png" alt="Settings & AI Configuration" width="100%" style="border-radius: 10px;" />
+| 🎯 **Strategy Engine** | Calculates opening anchors, target numbers, walk-away limits, and acceptance probabilities using game theory. |
+| 🎭 **Simulation Arena** | Live AI roleplay with realistic counter-offers, emotional pushbacks, and tactical trade-offs. |
+| 🧠 **Real-Time Coach** | Micro-coaching on every move — flags premature concessions, BATNA deviation, and emotional phrasing. |
+| ⚡ **1-Click Presets** | Ready-to-run scenarios for Salary, Rent, Freelance, and Enterprise SaaS negotiations. |
+| 📊 **Analytics Dashboard** | Tracks historical performance, concession frequency, leverage scores, and target achievement. |
+| 🔒 **100% Private** | All keys and data stay in your browser's `localStorage` — nothing leaves your device. |
 
 ---
 
 ## 🏗️ System Architecture
 
 ```mermaid
-flowchart LR
-    A[User Input Scenario] --> B[DealMind Strategy Engine]
-    B --> C{API Key Present?}
-    C -->|Yes| D[Google Gemini 2.0 Flash]
-    C -->|No| E[Simulated Mock AI Engine]
-    D --> F[Negotiation Strategy Matrix]
+flowchart TD
+    A(["👤 User Input\nScenario & Goals"]) --> B["⚙️ DealMind\nStrategy Engine"]
+
+    B --> C{"🔑 Gemini API\nKey Present?"}
+    C -->|"✅ Yes"| D["🤖 Google\nGemini 2.0 Flash"]
+    C -->|"❌ No"| E["🎭 Mock AI\nEngine (Demo)"]
+
+    D --> F["📊 Strategy\nMatrix Builder"]
     E --> F
-    F --> G[Interactive Roleplay Arena]
-    G --> H[Live Opponent Agent]
-    G --> I[Real-time AI Coach]
-    H & I --> J[Final Performance Grade & Concession Report]
+
+    F --> G1["⚓ Anchor\nRecommendation"]
+    F --> G2["🛡️ BATNA\nCalculator"]
+    F --> G3["📈 Leverage\nScore"]
+
+    G1 & G2 & G3 --> H["🎮 Interactive\nRoleplay Arena"]
+
+    H --> I["🤝 AI Opponent\nAgent"]
+    H --> J["🧠 Real-Time\nAI Coach"]
+
+    I --> K["💬 Live\nConversation"]
+    J --> K
+
+    K --> L(["🏆 Final Grade\nConcession Report\nPerformance Score"])
+
+    style A fill:#1a1a2e,color:#fff,stroke:#FF5722
+    style L fill:#1a1a2e,color:#fff,stroke:#10B981
+    style D fill:#1a1a2e,color:#8E75B2,stroke:#8E75B2
+    style H fill:#1a1a2e,color:#FF5722,stroke:#FF5722
+```
+
+---
+
+## 🔄 User Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Dashboard
+    participant StrategyEngine as ⚙️ Strategy Engine
+    participant GeminiAI as 🤖 Gemini AI
+    participant Simulator as 🎮 Simulator
+    participant Coach as 🧠 AI Coach
+
+    User->>Dashboard: Create New Negotiation
+    Dashboard->>StrategyEngine: Submit scenario details
+    StrategyEngine->>GeminiAI: Analyze context & leverage
+    GeminiAI-->>StrategyEngine: Return strategy matrix
+    StrategyEngine-->>Dashboard: Show anchors, BATNA, score
+
+    User->>Simulator: Launch Simulation
+    loop Each Round
+        User->>Simulator: Send message / offer
+        Simulator->>GeminiAI: Generate counterparty response
+        GeminiAI-->>Simulator: Dynamic counter-offer
+        Simulator->>Coach: Evaluate user's message
+        Coach-->>User: Real-time tactical feedback
+    end
+
+    Simulator-->>User: Final grade & concession report
+```
+
+---
+
+## 🎯 Practice Scenarios
+
+```
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                    BUILT-IN NEGOTIATION SCENARIOS                   │
+  ├──────┬──────────────────────────────┬──────────────┬───────────────┤
+  │  💼  │ Senior Software Engineer     │ Target       │ ₹10.0 LPA     │
+  │      │ vs. HR Talent Partner        │ Walk-away    │ ₹9.0 LPA      │
+  │      │                              │ Difficulty   │ 🟡 Intermediate│
+  ├──────┼──────────────────────────────┼──────────────┼───────────────┤
+  │  🏠  │ Apartment Lease Renewal      │ Target       │ ₹28,000/mo    │
+  │      │ vs. Property Landlord        │ Walk-away    │ ₹32,000/mo    │
+  │      │                              │ Difficulty   │ 🟢 Beginner    │
+  ├──────┼──────────────────────────────┼──────────────┼───────────────┤
+  │  💻  │ High-Ticket Freelance        │ Target       │ ₹80,000/mo    │
+  │      │ vs. Startup Founder          │ Walk-away    │ ₹65,000/mo    │
+  │      │                              │ Difficulty   │ 🔴 Advanced    │
+  ├──────┼──────────────────────────────┼──────────────┼───────────────┤
+  │  🏢  │ Enterprise SaaS Contract     │ Target       │ ₹90,000/yr    │
+  │      │ vs. VP of Procurement        │ Walk-away    │ ₹105,000/yr   │
+  │      │                              │ Difficulty   │ 🔴 Advanced    │
+  └──────┴──────────────────────────────┴──────────────┴───────────────┘
+```
+
+---
+
+## 🤖 AI Persona Styles
+
+The AI counterparty can be calibrated to one of four negotiation temperaments:
+
+```
+  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+  │  🤝 COLLABORATIVE│  │  💼 PROFESSIONAL │  │  🛡️ FIRM        │  │  ⚔️ AGGRESSIVE  │
+  │─────────────────│  │─────────────────│  │─────────────────│  │─────────────────│
+  │ Seeks win-win   │  │ Data-driven      │  │ Holds position  │  │ Anchors high    │
+  │ Makes concessions│  │ Formal tone     │  │ Minimal give    │  │ Creates urgency │
+  │ Best for: Trust │  │ Best for: Corp  │  │ Best for: BATNA │  │ Best for: Stress│
+  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+---
+
+## 📁 Project Structure
+
+```
+DealMind-/
+├── 📂 src/
+│   ├── 📂 contexts/
+│   │   ├── AuthContext.tsx          # Auth + Demo mode
+│   │   └── NegotiationContext.tsx   # Global negotiations state
+│   │
+│   ├── 📂 layouts/
+│   │   ├── AppLayout.tsx            # Sidebar + navigation shell
+│   │   └── AppLayout.css
+│   │
+│   ├── 📂 pages/
+│   │   ├── Landing.tsx              # Public homepage (Hanzo design)
+│   │   ├── Dashboard.tsx            # Command center with hero + stats
+│   │   ├── NewNegotiation.tsx       # Multi-step scenario builder
+│   │   ├── StrategyPage.tsx         # AI-generated strategy output
+│   │   ├── SimulatorHub.tsx         # Practice scenario selector
+│   │   ├── Simulator.tsx            # Live chat + AI coach
+│   │   ├── History.tsx              # Negotiation archive
+│   │   ├── Insights.tsx             # Analytics + charts
+│   │   └── Settings.tsx             # API key + preferences
+│   │
+│   ├── 📂 services/
+│   │   └── aiService.ts             # Gemini API client
+│   │
+│   ├── 📂 data/
+│   │   └── mockData.ts              # Demo scenarios + mock analysis
+│   │
+│   └── index.css                    # Global design tokens (Hanzo theme)
+│
+├── index.html
+├── vite.config.ts
+├── tsconfig.json
+└── package.json
 ```
 
 ---
@@ -107,6 +227,7 @@ flowchart LR
 ## ⚡ Quick Start
 
 ### 1. Clone & Install
+
 ```bash
 # Clone the repository
 git clone https://github.com/Aryan-Lade/DealMind-.git
@@ -119,51 +240,62 @@ npm install
 ```
 
 ### 2. Start Development Server
+
 ```bash
 npm run dev
 ```
 
 Visit [`http://localhost:5173/`](http://localhost:5173/) in your browser.
 
+> **No API key needed to explore!** Click **Try Demo** on the landing page to access all features instantly with realistic mock data.
+
 ---
 
 ## ⚙️ Configuration
 
-DealMind works completely out of the box in **Demo Mode** with realistic offline mock data.
+DealMind works **out of the box in Demo Mode** — zero setup required.
 
-To enable live Google Gemini AI generation:
+To enable live Google Gemini AI:
 
-### Option A: In-App Settings (Recommended)
-1. Launch the app and navigate to **Settings** (`/settings`).
-2. Paste your API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-3. Click **Test API Key** to verify connection, then click **Save Preferences**.
+### Option A — In-App Settings *(Recommended)*
 
-### Option B: Environment Variables
-Copy `.env.example` to `.env`:
+```
+  App → Settings → Paste Gemini API Key → Test Connection → Save
+```
+
+Get your free key at [Google AI Studio →](https://aistudio.google.com/app/apikey)
+
+### Option B — Environment Variable
+
 ```bash
 cp .env.example .env
 ```
-And add your Gemini key:
+
 ```env
+# .env
 VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ---
 
-## 🎯 Included Practice Scenarios
+## 🛠️ Tech Stack
 
-| Scenario | Opponent Role | Target | Walk-Away | Difficulty |
-| :--- | :--- | :--- | :--- | :--- |
-| 💼 **Senior Software Engineer** | HR Talent Partner | ₹10.0 LPA | ₹9.0 LPA | Intermediate |
-| 🏠 **Apartment Lease Renewal** | Property Landlord | ₹28,000 | ₹32,000 | Beginner |
-| 💻 **High-Ticket Freelance Retainer**| Startup Founder | ₹80,000 | ₹65,000 | Advanced |
-| 🏢 **Enterprise SaaS Procurement** | VP of Procurement | ₹90,000 | ₹105,000 | Advanced |
+| Layer | Technology |
+| :--- | :--- |
+| **Framework** | React 19 + TypeScript |
+| **Build Tool** | Vite 8 |
+| **Styling** | Vanilla CSS with custom design tokens |
+| **Animations** | Framer Motion 11 |
+| **AI Engine** | Google Gemini 2.0 Flash |
+| **Charts** | Recharts |
+| **Icons** | Lucide React |
+| **Routing** | React Router v6 |
+| **Storage** | Browser localStorage |
 
 ---
 
 ## 📦 Production Build
 
-To produce an optimized production bundle:
 ```bash
 npm run build
 npm run preview
@@ -171,3 +303,22 @@ npm run preview
 
 ---
 
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+```
+  ╔══════════════════════════════════════════════════╗
+  ║   Built with ⚡ by Aryan Lade                    ║
+  ║   Powered by 🤖 Google Gemini 2.0 Flash          ║
+  ║   Designed with the Hanzo aesthetic              ║
+  ╚══════════════════════════════════════════════════╝
+```
+
+**[⭐ Star this repo](https://github.com/Aryan-Lade/DealMind-)** if DealMind helped you win a negotiation!
+
+</div>

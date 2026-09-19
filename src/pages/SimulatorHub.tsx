@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, Zap, Play, ArrowRight, Briefcase, Home, Laptop, Building, Plus } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { MessageSquare, Zap, Play, ArrowRight, Briefcase, Home, Laptop, Building, Plus, Brain, Shield } from 'lucide-react'
 import AppLayout from '../../src/layouts/AppLayout'
 import { useNegotiations } from '../../src/contexts/NegotiationContext'
 import { DEMO_SCENARIOS, MOCK_ANALYSIS, formatCurrency } from '../../src/data/mockData'
@@ -106,115 +107,184 @@ export default function SimulatorHub() {
     navigate(`/simulate/${newNeg.id}`)
   }
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 24 },
+    show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] } }),
+  }
+
+  const DIFFICULTY_STYLE: Record<string, { color: string; bg: string }> = {
+    Beginner:     { color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+    Intermediate: { color: '#38BDF8', bg: 'rgba(56,189,248,0.1)' },
+    Advanced:     { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
+  }
+
   return (
     <AppLayout>
       <div className="simhub-page">
-        {/* Banner */}
-        <div className="simhub-hero">
-          <div className="simhub-badge">
-            <Zap size={13} style={{ color: 'var(--accent)' }} />
-            AI Opponent + Real-Time Executive Coach
-          </div>
-          <h1 className="heading-lg simhub-title">Negotiation Simulation Arena</h1>
-          <p className="text-secondary simhub-subtitle">
-            Roleplay live against an intelligent AI counterparty calibrated to your scenario.
-            Receive instant tactic analysis, concession tracking, and real-time coaching before the real deal.
-          </p>
-        </div>
 
-        {/* Active Negotiations Section */}
+        {/* ── Hero Banner ── */}
+        <motion.div
+          className="simhub-hero"
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="simhub-blob blob-1" />
+          <div className="simhub-blob blob-2" />
+          <div className="simhub-hero-left">
+            <div className="simhub-eyebrow">
+              <Brain size={13} /> AI Negotiation Simulator
+            </div>
+            <h1 className="simhub-title">Practice. Win.<br /><span className="simhub-title-accent">Repeat.</span></h1>
+            <p className="simhub-subtitle">
+              Roleplay against an intelligent AI counterparty calibrated to your scenario.
+              Get instant coaching, concession tracking, and real-time feedback.
+            </p>
+            <div className="simhub-hero-pills">
+              {['4 AI Personas', 'Real-Time Coach', 'Concession Tracker', 'Score & Grade'].map(p => (
+                <span key={p} className="simhub-hero-pill">{p}</span>
+              ))}
+            </div>
+          </div>
+          <div className="simhub-hero-right">
+            <div className="simhub-hero-card">
+              <Shield size={20} style={{ color: 'var(--accent)', marginBottom: 12 }} />
+              <div className="shc-val">92%</div>
+              <div className="shc-lbl">Avg. Win Rate</div>
+            </div>
+            <div className="simhub-hero-card">
+              <Brain size={20} style={{ color: '#38BDF8', marginBottom: 12 }} />
+              <div className="shc-val" style={{ color: '#38BDF8' }}>∞</div>
+              <div className="shc-lbl">Practice Rounds</div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── Active Negotiations ── */}
         {activeNegotiations.length > 0 && (
           <div className="simhub-section">
-            <div className="simhub-section-header">
-              <h2 className="heading-md">Your Active Negotiations</h2>
-              <span className="text-secondary text-sm">Select a scenario you prepared</span>
-            </div>
+            <motion.div
+              className="simhub-section-header"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <div>
+                <h2 className="simhub-section-title">Your Active Negotiations</h2>
+                <p className="simhub-section-sub">Ready-to-simulate scenarios from your prepared strategies</p>
+              </div>
+              <span className="simhub-count-badge">{activeNegotiations.length} ready</span>
+            </motion.div>
             <div className="simhub-active-grid">
-              {activeNegotiations.map(neg => (
-                <div key={neg.id} className="simhub-active-card">
+              {activeNegotiations.map((neg, i) => (
+                <motion.div
+                  key={neg.id}
+                  className="simhub-active-card"
+                  custom={i}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="show"
+                  whileHover={{ y: -4, boxShadow: '0 16px 40px rgba(0,0,0,0.07)' }}
+                >
                   <div className="simhub-active-top">
                     <span className="badge badge-accent" style={{ textTransform: 'capitalize' }}>{neg.type}</span>
-                    <span className="text-secondary text-xs">{new Date(neg.createdAt).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {new Date(neg.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                   <h3 className="simhub-active-name">{neg.title}</h3>
                   <div className="simhub-active-numbers">
-                    <div>
-                      <span className="text-xs text-muted">Their Offer:</span>
-                      <p className="text-sm font-semibold">{formatCurrency(neg.currentOffer)}</p>
+                    <div className="san">
+                      <span className="san-lbl">Their Offer</span>
+                      <p className="san-val">{formatCurrency(neg.currentOffer)}</p>
                     </div>
-                    <div>
-                      <span className="text-xs text-muted">Target:</span>
-                      <p className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>{formatCurrency(neg.desiredOffer)}</p>
+                    <div className="san">
+                      <span className="san-lbl">Your Target</span>
+                      <p className="san-val" style={{ color: 'var(--accent)' }}>{formatCurrency(neg.desiredOffer)}</p>
                     </div>
                   </div>
                   <button
-                    className="btn btn-accent btn-sm"
-                    style={{ marginTop: 16, width: '100%' }}
+                    className="btn btn-dark"
+                    style={{ width: '100%', marginTop: 18 }}
                     onClick={() => navigate(`/simulate/${neg.id}`)}
                   >
-                    <Play size={14} />
-                    Launch Simulation
+                    <Play size={14} /> Launch Simulation
                   </button>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Quick Practice Scenarios */}
+        {/* ── Quick Practice ── */}
         <div className="simhub-section">
-          <div className="simhub-section-header">
+          <motion.div
+            className="simhub-section-header"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <div>
-              <h2 className="heading-md">Instant Practice Scenarios</h2>
-              <p className="text-secondary text-sm" style={{ marginTop: 4 }}>
-                Hop into a realistic negotiation simulation in 1 click — no setup needed
-              </p>
+              <h2 className="simhub-section-title">Instant Practice Scenarios</h2>
+              <p className="simhub-section-sub">Jump into a realistic negotiation in 1 click — no setup needed</p>
             </div>
             <button className="btn btn-outline btn-sm" onClick={() => navigate('/negotiate/new')}>
-              <Plus size={14} />
-              Create Custom
+              <Plus size={14} /> Create Custom
             </button>
-          </div>
+          </motion.div>
 
           <div className="simhub-presets-grid">
-            {QUICK_SCENARIOS.map(sc => {
+            {QUICK_SCENARIOS.map((sc, i) => {
               const Icon = sc.icon
+              const diff = DIFFICULTY_STYLE[sc.difficulty] || DIFFICULTY_STYLE.Beginner
               return (
-                <div key={sc.key} className="simhub-preset-card">
+                <motion.div
+                  key={sc.key}
+                  className="simhub-preset-card"
+                  custom={i}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="show"
+                  whileHover={{ y: -5, boxShadow: `0 20px 50px ${sc.color}14` }}
+                >
                   <div className="simhub-preset-header">
                     <div className="simhub-preset-icon" style={{ background: `${sc.color}15`, color: sc.color }}>
                       <Icon size={22} />
                     </div>
-                    <span className="badge badge-outline" style={{ fontSize: 11 }}>{sc.difficulty}</span>
+                    <span className="diff-badge" style={{ background: diff.bg, color: diff.color }}>
+                      {sc.difficulty}
+                    </span>
                   </div>
 
                   <h3 className="simhub-preset-title">{sc.title}</h3>
-                  <p className="text-muted text-xs" style={{ marginBottom: 10 }}>Opponent: <strong>{sc.role}</strong></p>
+                  <p className="simhub-opponent-label">vs. <strong>{sc.role}</strong></p>
                   <p className="simhub-preset-desc">{sc.context}</p>
 
                   <div className="simhub-preset-metrics">
-                    <div className="simhub-preset-metric">
-                      <span className="text-muted text-xs">Opening</span>
-                      <span className="font-semibold">{formatCurrency(sc.currentOffer)}</span>
+                    <div className="spm">
+                      <span className="spm-lbl">Opening</span>
+                      <span className="spm-val">{formatCurrency(sc.currentOffer)}</span>
                     </div>
-                    <div className="simhub-preset-metric">
-                      <span className="text-muted text-xs">Target</span>
-                      <span className="font-semibold" style={{ color: 'var(--accent)' }}>{formatCurrency(sc.desiredOffer)}</span>
+                    <div className="spm-div" />
+                    <div className="spm">
+                      <span className="spm-lbl">Target</span>
+                      <span className="spm-val" style={{ color: 'var(--accent)' }}>{formatCurrency(sc.desiredOffer)}</span>
                     </div>
-                    <div className="simhub-preset-metric">
-                      <span className="text-muted text-xs">Walk Away</span>
-                      <span className="font-semibold text-danger">{formatCurrency(sc.walkAway)}</span>
+                    <div className="spm-div" />
+                    <div className="spm">
+                      <span className="spm-lbl">Walk-away</span>
+                      <span className="spm-val" style={{ color: 'var(--danger)' }}>{formatCurrency(sc.walkAway)}</span>
                     </div>
                   </div>
 
                   <button
-                    className="btn btn-accent"
-                    style={{ width: '100%', marginTop: 18 }}
+                    className="btn btn-dark"
+                    style={{ width: '100%', marginTop: 20 }}
                     onClick={() => startQuickScenario(sc)}
                   >
                     Start Roleplay <ArrowRight size={15} />
                   </button>
-                </div>
+                </motion.div>
               )
             })}
           </div>

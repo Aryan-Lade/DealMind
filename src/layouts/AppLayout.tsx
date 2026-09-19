@@ -37,8 +37,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Logo */}
       <div className="sidebar-logo">
         <Link to="/dashboard" className="sidebar-logo-link">
-          <span className="navbar-logo-icon"><Zap size={15} /></span>
-          {!collapsed && <span className="sidebar-logo-text">DealMind</span>}
+          <span className="navbar-logo-icon"><Zap size={14} /></span>
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="sidebar-logo-text">DealMind</span>
+              <span className="badge badge-outline" style={{ fontSize: 9, padding: '1px 5px' }}>v2.0</span>
+            </div>
+          )}
         </Link>
         <button className="sidebar-collapse-btn" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle sidebar">
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

@@ -31,7 +31,7 @@ function DemoBanner() {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001,
-      background: 'var(--accent)', color: '#000', textAlign: 'center',
+      background: 'var(--accent)', color: '#FFFFFF', textAlign: 'center',
       padding: '6px 16px', fontSize: 12, fontWeight: 700, letterSpacing: '0.05em',
     }}>
       ⚡ DEMO MODE — Using mock AI responses. All features work! Data saves locally.

@@ -1,410 +1,514 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  Zap, ArrowRight, Target, TrendingUp, Brain, Shield,
-  ChevronRight, Star, MessageSquare, BarChart2, Clock,
-  DollarSign, Home, Briefcase, ShoppingBag, RefreshCw, Building2
+  ArrowRight, Shield, Zap, Target, TrendingUp, MessageSquare,
+  BarChart2, ChevronDown, Check, Plus, Minus, ExternalLink,
+  Sparkles, Layers, Cpu, Award
 } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import { useAuth } from '../contexts/AuthContext'
-import { formatCurrency } from '../data/mockData'
 import './Landing.css'
 
-// Animated counter hook
-function useCounter(target: number, duration = 2000, start = false) {
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    if (!start) return
-    let startTime: number
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp
-      const progress = Math.min((timestamp - startTime) / duration, 1)
-      setCount(Math.floor(progress * target))
-      if (progress < 1) requestAnimationFrame(step)
-    }
-    requestAnimationFrame(step)
-  }, [target, duration, start])
-  return count
-}
-
-const USE_CASES = [
-  { icon: DollarSign, label: 'Salary', color: '#22C55E', desc: 'Know your market value & anchor high' },
-  { icon: Home, label: 'Rent', color: '#3B82F6', desc: 'Negotiate with your landlord confidently' },
-  { icon: Briefcase, label: 'Freelancing', color: '#F59E0B', desc: 'Price your work at its real value' },
-  { icon: ShoppingBag, label: 'Purchases', color: '#EC4899', desc: 'Never pay sticker price again' },
-  { icon: RefreshCw, label: 'Subscriptions', color: '#8B5CF6', desc: 'Cancel leverage into better deals' },
-  { icon: Building2, label: 'Business', color: '#EF4444', desc: 'Close deals on your terms' },
+const CAPABILITY_CAPSULES = [
+  { name: 'BATNA Calculator', color: '#FF5722', bg: 'rgba(255, 87, 34, 0.1)', icon: '⚖️' },
+  { name: 'Counterparty Profiler', color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', icon: '👤' },
+  { name: 'Anchor Formulation', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', icon: '⚓' },
+  { name: 'Real-Time Coach', color: '#38BDF8', bg: 'rgba(56, 189, 248, 0.1)', icon: '🧠' },
+  { name: 'Concession Tracker', color: '#EC4899', bg: 'rgba(236, 72, 153, 0.1)', icon: '📉' },
+  { name: 'Tone & Leverage Matrix', color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)', icon: '📊' },
 ]
 
-const HOW_IT_WORKS = [
-  { step: '01', title: 'Tell us your situation', desc: 'Share the offer, your goal, context, and alternatives.' },
-  { step: '02', title: 'AI finds your leverage', desc: 'DealMind maps your bargaining power across key factors.' },
-  { step: '03', title: 'Build your strategy', desc: 'Get opening offers, walk-away points, and best arguments.' },
-  { step: '04', title: 'Practice against AI', desc: 'Simulate the opponent at different difficulty levels.' },
-  { step: '05', title: 'Negotiate confidently', desc: 'Walk in prepared. Know exactly when to push or walk away.' },
+const CASE_STUDIES = [
+  {
+    tag: 'Salary & Equity',
+    title: 'Senior Software Engineer Package',
+    description: 'Initial offer was ₹8 LPA. Using DealMind anchor framing and BATNA leverage, the candidate countered at ₹10.4 LPA and closed at ₹9.8 LPA + joining bonus.',
+    metric: '+22.5% Uplift',
+    counterparty: 'Tech Talent Acquisition',
+    tags: ['Tech Career', 'Compensation', 'BATNA Framing'],
+  },
+  {
+    tag: 'Lease & Property',
+    title: 'Prime Apartment Rent Renewal',
+    description: 'Landlord proposed a sudden 20% spike to ₹35,000. Leveraged 3-year spotless payment history and local vacancy data to lock renewal at ₹28,500.',
+    metric: '₹78,000 Saved / Yr',
+    counterparty: 'Property Owner',
+    tags: ['Real Estate', 'Tenant Rights', 'Market Data'],
+  },
+  {
+    tag: 'Client Retainer',
+    title: 'High-Ticket Design & Dev Retainer',
+    description: 'A venture-backed startup sought unlimited design work for ₹50,000/mo. DealMind structured tiered scope packages, securing an ₹80,000/mo contract.',
+    metric: '+60% Deal Value',
+    counterparty: 'Startup Founder',
+    tags: ['Consulting', 'Scope Defense', 'Value Pricing'],
+  },
+  {
+    tag: 'Enterprise SaaS',
+    title: 'Multi-Seat Enterprise Software Contract',
+    description: 'Negotiating annual licenses with procurement. Exchanged 2-year upfront commitment for 26% discount + dedicated support SLA.',
+    metric: '26% Discount Secured',
+    counterparty: 'VP of Procurement',
+    tags: ['B2B SaaS', 'Procurement', 'Trade-offs'],
+  },
 ]
 
-const PROBLEMS = [
-  { icon: Brain, title: "Don't know your leverage", desc: "Most people enter negotiations blind to their actual bargaining power." },
-  { icon: Target, title: "Don't know what to offer", desc: "Opening too high or too low can instantly kill your deal." },
-  { icon: Shield, title: "Don't know when to push", desc: "Without a strategy, pressure from the other side leads to costly mistakes." },
+const FAQS = [
+  {
+    q: 'How does DealMind predict counterparty responses?',
+    a: 'DealMind uses game theory frameworks and Google Gemini 2.0 Flash to model the behavioral psychology of 4 counterparty personas: Professional (data-focused), Collaborative (win-win), Firm (anchor-defending), and Aggressive (deadline-pressuring).',
+  },
+  {
+    q: 'Can I use DealMind without an API key?',
+    a: 'Yes. DealMind includes a high-fidelity Demo Mode that simulates realistic AI opponent behaviors, coaching critiques, and scoring algorithms locally without any setup or API credentials.',
+  },
+  {
+    q: 'Is my negotiation data and salary private?',
+    a: '100% private. All your scenario context, numbers, and practice dialogues remain stored solely in your browser localStorage. No negotiation transcripts are ever sold or used for public model training.',
+  },
+  {
+    q: 'What is BATNA and why does it matter?',
+    a: 'BATNA stands for Best Alternative To a Negotiated Agreement. It is your ultimate source of leverage. DealMind forces you to calculate and articulate your BATNA so you never accept an offer worse than walking away.',
+  },
+  {
+    q: 'How does the in-conversation AI coach work?',
+    a: 'While you roleplay in the Simulator Arena, the AI Coach monitors every message you send, flagging premature concessions, suggesting tactical counters, and grading your adherence to target anchors.',
+  },
 ]
 
 export default function Landing() {
-  const { user, enterDemoMode } = useAuth()
+  const { enterDemoMode } = useAuth()
   const navigate = useNavigate()
-  const heroRef = useRef<HTMLDivElement>(null)
-  const metricsRef = useRef<HTMLDivElement>(null)
-  const [metricsVisible, setMetricsVisible] = useState(false)
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [pricingPeriod, setPricingPeriod] = useState<'free' | 'pro'>('free')
 
-  // Parallax hero
-  useEffect(() => {
-    const onScroll = () => {
-      if (heroRef.current) {
-        heroRef.current.style.transform = `translateY(${window.scrollY * 0.08}px)`
-      }
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  // Metrics visibility
-  useEffect(() => {
-    const observer = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) setMetricsVisible(true)
-    }, { threshold: 0.3 })
-    if (metricsRef.current) observer.observe(metricsRef.current)
-    return () => observer.disconnect()
-  }, [])
-
-  const handleDemo = () => {
+  const handleLaunchDemo = () => {
     enterDemoMode()
     navigate('/dashboard')
   }
 
-  const handleStart = () => {
-    if (user) navigate('/negotiate/new')
-    else navigate('/register')
-  }
-
-  const leverage = useCounter(82, 1800, metricsVisible)
-  const target = useCounter(95, 2000, metricsVisible)
-  const saved = useCounter(150000, 2200, metricsVisible)
-
   return (
-    <div className="landing">
-      <Navbar />
+    <div className="hanzo-landing">
+      {/* Floating Capsule Header */}
+      <header className="hanzo-header">
+        <div className="hanzo-header-inner">
+          <Link to="/" className="hanzo-logo">
+            <span className="hanzo-logo-symbol"><Zap size={14} /></span>
+            <span className="hanzo-logo-text">DealMind</span>
+            <span className="hanzo-version-pill">v2.0</span>
+          </Link>
 
-      {/* ===== HERO ===== */}
-      <section className="hero">
-        {/* Ambient glow */}
-        <div className="hero-glow hero-glow-1" />
-        <div className="hero-glow hero-glow-2" />
+          <nav className="hanzo-nav">
+            <a href="#capabilities">Capabilities</a>
+            <a href="#process">Process</a>
+            <a href="#cases">Case Studies</a>
+            <a href="#pricing">Access</a>
+            <a href="#faq">FAQ</a>
+          </nav>
 
-        <div className="container">
-          <div className="hero-content">
-            <div className="hero-badge">
-              <Zap size={12} />
-              AI-Powered Negotiation Strategist
-            </div>
-
-            <h1 className="hero-headline">
-              Know Your Leverage.<br />
-              <span className="hero-accent">Negotiate Smarter.</span>
-            </h1>
-
-            <p className="hero-subtext">
-              DealMind turns uncertainty into strategy — analyzing your leverage,
-              simulating the other side, and coaching you toward better deals.
-            </p>
-
-            <div className="hero-ctas">
-              <button className="btn btn-accent btn-lg" onClick={handleStart}>
-                <Zap size={18} />
-                Start Negotiating
-              </button>
-              <button className="btn btn-ghost btn-lg" onClick={handleDemo}>
-                Try Interactive Demo
-                <ArrowRight size={16} />
-              </button>
-            </div>
-
-            <div className="hero-social-proof">
-              <div className="proof-avatars">
-                {['A', 'B', 'C', 'D'].map((l, i) => (
-                  <div key={i} className="proof-avatar" style={{ zIndex: 4 - i }}>{l}</div>
-                ))}
-              </div>
-              <div>
-                <div className="proof-stars">
-                  {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="currentColor" />)}
-                </div>
-                <span className="proof-text">Loved by 2,400+ negotiators</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Visualization */}
-          <div className="hero-visual" ref={heroRef}>
-            <div className="deal-card deal-card-main">
-              <div className="deal-label">ACTIVE NEGOTIATION</div>
-              <div className="deal-title">Software Engineer Offer</div>
-
-              <div className="deal-row">
-                <div className="deal-col">
-                  <span className="deal-col-label">Current</span>
-                  <span className="deal-col-val deal-col-low">{formatCurrency(800000)}</span>
-                </div>
-                <div className="deal-arrow">→</div>
-                <div className="deal-col">
-                  <span className="deal-col-label">Target</span>
-                  <span className="deal-col-val deal-col-high">{formatCurrency(1000000)}</span>
-                </div>
-              </div>
-
-              <div className="deal-metrics">
-                <div className="deal-metric">
-                  <span className="dm-label">Opening</span>
-                  <span className="dm-val">{formatCurrency(1050000)}</span>
-                </div>
-                <div className="deal-metric">
-                  <span className="dm-label">Walk-away</span>
-                  <span className="dm-val">{formatCurrency(900000)}</span>
-                </div>
-                <div className="deal-metric">
-                  <span className="dm-label">BATNA</span>
-                  <span className="dm-val">{formatCurrency(920000)}</span>
-                </div>
-              </div>
-
-              <div className="deal-leverage">
-                <div className="dl-header">
-                  <span>Leverage Score</span>
-                  <span className="dl-pct">82%</span>
-                </div>
-                <div className="dl-bar">
-                  <div className="dl-fill" style={{ width: '82%' }} />
-                </div>
-              </div>
-            </div>
-
-            {/* Coach bubble */}
-            <div className="coach-bubble">
-              <div className="coach-icon"><Brain size={14} /></div>
-              <div className="coach-text">
-                <strong>AI Coach:</strong> Counter at ₹10 LPA — your competing offer makes this realistic.
-              </div>
-            </div>
-
-            {/* Opponent bubble */}
-            <div className="opponent-bubble">
-              <span className="opp-label">Opponent:</span>
-              <span>"We can offer ₹8.5 LPA."</span>
-            </div>
+          <div className="hanzo-header-actions">
+            <Link to="/login" className="btn btn-ghost btn-sm">Sign In</Link>
+            <button className="btn btn-dark btn-sm" onClick={handleLaunchDemo}>
+              Try Demo <ArrowRight size={13} />
+            </button>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* ===== PROBLEMS ===== */}
-      <section className="section problems-section">
-        <div className="container">
-          <div className="section-header">
-            <p className="section-overline">The Problem</p>
-            <h2 className="display-md">Negotiation shouldn't be guesswork.</h2>
+      {/* ============================================================
+          HERO SECTION (WARM LIGHT CANVAS)
+          ============================================================ */}
+      <section className="hanzo-hero">
+        <div className="hanzo-container">
+          {/* Status Indicator Pill */}
+          <div className="status-capsule">
+            <span className="status-dot" />
+            <span>AI Strategy Engine Active — Gemini 2.0 Connected</span>
           </div>
-          <div className="grid-3" style={{ marginTop: 48 }}>
-            {PROBLEMS.map((p, i) => (
-              <div className="problem-card" key={i}>
-                <div className="problem-icon"><p.icon size={22} /></div>
-                <h3 className="heading-md">{p.title}</h3>
-                <p className="body-md text-secondary">{p.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ===== USE CASES ===== */}
-      <section className="section" id="use-cases">
-        <div className="container">
-          <div className="section-header">
-            <p className="section-overline">Use Cases</p>
-            <h2 className="display-md">One AI strategist.<br />Every negotiation.</h2>
-          </div>
-          <div className="use-cases-grid" style={{ marginTop: 48 }}>
-            {USE_CASES.map((uc, i) => (
-              <div className="use-case-card" key={i} onClick={handleStart}>
-                <div className="uc-icon" style={{ background: `${uc.color}1A`, color: uc.color }}>
-                  <uc.icon size={24} />
-                </div>
-                <h3 className="heading-md">{uc.label}</h3>
-                <p className="body-sm text-secondary">{uc.desc}</p>
-                <span className="uc-arrow"><ChevronRight size={16} /></span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          {/* Dual-Tone Display Headline with embedded badges */}
+          <h1 className="hanzo-hero-title heading-dual">
+            Master High-Stakes
+            <span className="inline-badge badge-shield"><Shield size={20} /></span>
+            <br />
+            Negotiations,
+            <span className="inline-badge badge-target"><Target size={20} /></span>
+            <span className="ghost-text"> Crafted by AI</span>
+          </h1>
 
-      {/* ===== HOW IT WORKS ===== */}
-      <section className="section how-section" id="how-it-works">
-        <div className="container">
-          <div className="section-header">
-            <p className="section-overline">Process</p>
-            <h2 className="display-md">How DealMind Works</h2>
-          </div>
-          <div className="steps-grid" style={{ marginTop: 60 }}>
-            {HOW_IT_WORKS.map((s, i) => (
-              <div className="step-card" key={i}>
-                <div className="step-number">{s.step}</div>
-                <h3 className="heading-md" style={{ marginTop: 16 }}>{s.title}</h3>
-                <p className="body-sm text-secondary" style={{ marginTop: 8 }}>{s.desc}</p>
-                {i < HOW_IT_WORKS.length - 1 && <div className="step-connector" />}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          <p className="hanzo-hero-sub">
+            Roleplay live against calibrated AI counterparties. Receive in-flight tactical coaching,
+            mathematical anchor formulation, and concession defense before entering the real room.
+          </p>
 
-      {/* ===== METRICS ===== */}
-      <section className="section metrics-section" ref={metricsRef}>
-        <div className="container">
-          <div className="metrics-inner">
-            <div className="metric-item">
-              <div className="metric-num">{leverage}%</div>
-              <div className="metric-label">Average Leverage Identified</div>
+          {/* Hero CTAs */}
+          <div className="hanzo-hero-cta">
+            <button className="btn btn-dark btn-lg" onClick={handleLaunchDemo}>
+              Start Free Simulation <ArrowRight size={16} />
+            </button>
+            <a href="#process" className="btn btn-outline btn-lg">
+              Explore The Process
+            </a>
+          </div>
+
+          {/* Social Proof Avatar Stack */}
+          <div className="hanzo-social-proof">
+            <div className="avatar-stack">
+              <span className="avatar-chip" style={{ background: '#FF5722' }}>AL</span>
+              <span className="avatar-chip" style={{ background: '#10B981' }}>SK</span>
+              <span className="avatar-chip" style={{ background: '#3B82F6' }}>RD</span>
+              <span className="avatar-chip" style={{ background: '#F59E0B' }}>MJ</span>
+              <span className="avatar-chip" style={{ background: '#8B5CF6' }}>TC</span>
             </div>
-            <div className="metric-divider" />
-            <div className="metric-item">
-              <div className="metric-num">{target}%</div>
-              <div className="metric-label">Target Achievement Rate</div>
-            </div>
-            <div className="metric-divider" />
-            <div className="metric-item">
-              <div className="metric-num">{formatCurrency(saved)}</div>
-              <div className="metric-label">Avg. Value Unlocked Per Deal</div>
-            </div>
-          </div>
-          <p className="metrics-disclaimer">* AI-generated simulation metrics based on demo scenarios</p>
-        </div>
-      </section>
-
-      {/* ===== SIMULATOR PREVIEW ===== */}
-      <section className="section simulator-preview-section" id="simulator">
-        <div className="container">
-          <div className="section-header">
-            <p className="section-overline">Live Demo</p>
-            <h2 className="display-md">Watch DealMind in action.</h2>
-            <p className="body-lg text-secondary" style={{ marginTop: 16 }}>
-              An AI opponent, a real-time coach, and full strategy — all in one place.
+            <p className="social-proof-text">
+              <strong>Trusted by 2,400+ Negotiators</strong> in tech, consulting, and business
             </p>
           </div>
+        </div>
+      </section>
 
-          <div className="simulator-preview" style={{ marginTop: 48 }}>
-            <div className="sim-chat">
-              <div className="sim-msg sim-msg-opponent">
-                <div className="sim-msg-label">Opponent · HR Manager</div>
-                <div className="sim-msg-bubble">
-                  "We can offer ₹8.5 LPA. That's the top of our budget for this level."
+      {/* ============================================================
+          SHOWCASE VIEWPORT CONTAINER (DARK OBSIDIAN)
+          ============================================================ */}
+      <section className="hanzo-showcase-section">
+        <div className="hanzo-container">
+          <div className="showcase-viewport">
+            <div className="showcase-floating-badge">
+              <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+              <span>Live Strategy Matrix Preview</span>
+            </div>
+
+            {/* Showcase Mockup UI */}
+            <div className="showcase-mockup">
+              <div className="mockup-header">
+                <div className="mockup-dots">
+                  <span className="dot red" />
+                  <span className="dot yellow" />
+                  <span className="dot green" />
+                </div>
+                <div className="mockup-title">Google Software Engineer — Offer Strategy Matrix</div>
+                <div className="mockup-badge badge-emerald">Active Simulation</div>
+              </div>
+
+              <div className="mockup-body">
+                <div className="mockup-metric-card">
+                  <span className="metric-label">Opening Anchor</span>
+                  <p className="metric-value text-mono">₹10,80,000</p>
+                  <span className="metric-sub text-emerald">+8% over desired target</span>
+                </div>
+                <div className="mockup-metric-card">
+                  <span className="metric-label">Target Goal</span>
+                  <p className="metric-value text-mono" style={{ color: '#FF5722' }}>₹10,00,000</p>
+                  <span className="metric-sub">Sweet spot position</span>
+                </div>
+                <div className="mockup-metric-card">
+                  <span className="metric-label">Hard Walk-Away</span>
+                  <p className="metric-value text-mono text-danger">₹9,00,000</p>
+                  <span className="metric-sub">Protected by BATNA</span>
+                </div>
+                <div className="mockup-metric-card">
+                  <span className="metric-label">Bargaining Leverage</span>
+                  <p className="metric-value text-mono">84 / 100</p>
+                  <span className="metric-sub text-emerald">High Competitive Index</span>
                 </div>
               </div>
-              <div className="sim-msg sim-msg-user">
-                <div className="sim-msg-label">You</div>
-                <div className="sim-msg-bubble">
-                  "I appreciate the offer. However, given my competing offer and the market rate, I'm looking at ₹10 LPA."
+
+              {/* Chat snippet */}
+              <div className="mockup-chat-preview">
+                <div className="chat-msg opponent-msg">
+                  <span className="sender-tag">HR Director (Professional)</span>
+                  <p>"We have reviewed your profile. Our standard band for this role is ₹8.0 LPA with performance equity."</p>
                 </div>
-              </div>
-              <div className="sim-msg sim-msg-opponent">
-                <div className="sim-msg-label">Opponent · HR Manager</div>
-                <div className="sim-msg-bubble">
-                  "₹10 LPA is quite ambitious. Could you share more about your other offer?"
+                <div className="chat-msg user-msg">
+                  <span className="sender-tag">You (Strategist)</span>
+                  <p>"Thank you. Given my 3 years leading production architectures and a competing offer at ₹9.2 LPA, I am targeting ₹10.0 LPA."</p>
+                </div>
+                <div className="coach-alert-pill">
+                  <span className="coach-badge">AI COACH FEEDBACK</span>
+                  <p>"Strong opening anchor. You grounded your number with market validation and a concrete competing offer."</p>
                 </div>
               </div>
             </div>
-            <div className="sim-coach-panel">
-              <div className="sim-coach-header">
-                <Brain size={16} style={{ color: 'var(--accent)' }} />
-                <strong>AI Coach</strong>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          FLOATING CAPABILITY CAPSULES SECTION
+          ============================================================ */}
+      <section id="capabilities" className="hanzo-section hanzo-capabilities-section">
+        <div className="hanzo-container text-center">
+          <div className="eyebrow-rule">— Strategic Capabilities —</div>
+          <h2 className="section-title">
+            Every negotiation won is a masterclass in preparation
+          </h2>
+          <p className="section-sub">
+            DealMind replaces guesswork with mathematical modeling, psychological counterparty calibration,
+            and real-time tactical reinforcement.
+          </p>
+
+          <div className="capabilities-capsule-cloud">
+            {CAPABILITY_CAPSULES.map((cap, i) => (
+              <div key={i} className="floating-capsule">
+                <span className="capsule-icon" style={{ background: cap.bg, color: cap.color }}>
+                  {cap.icon}
+                </span>
+                <span>{cap.name}</span>
               </div>
-              <div className="sim-coach-item sim-coach-good">
-                <span className="sim-coach-tag">✓ Strong</span>
-                <p>You anchored at ₹10 LPA without revealing your walk-away.</p>
-              </div>
-              <div className="sim-coach-item sim-coach-warn">
-                <span className="sim-coach-tag">⚡ Tip</span>
-                <p>Don't disclose the exact competing offer — say "competitive offer from a leading firm."</p>
-              </div>
-              <div className="sim-suggestion">
-                <p className="body-sm text-secondary">Suggested response:</p>
-                <p className="body-sm" style={{ marginTop: 4 }}>
-                  "I have a formal offer from another company. I'd prefer to join here, but I need the compensation to align."
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          3D TILTED PROCESS CARDS DECK & SVG CURVE
+          ============================================================ */}
+      <section id="process" className="hanzo-section hanzo-process-section">
+        <div className="hanzo-container">
+          <div className="text-center" style={{ marginBottom: 56 }}>
+            <div className="eyebrow-rule">— Our Process, Explained —</div>
+            <h2 className="section-title">Three steps to absolute bargaining clarity</h2>
+            <p className="section-sub">From entering your numbers to walking into the meeting with total control.</p>
+          </div>
+
+          <div className="process-deck-container">
+            {/* SVG Connector Curve (Hanzo signature orange vector path) */}
+            <svg className="process-connector-curve" viewBox="0 0 1000 120" fill="none" preserveAspectRatio="none">
+              <path
+                d="M 50 60 C 250 10, 350 110, 500 60 C 650 10, 750 110, 950 60"
+                stroke="#FF5722"
+                strokeWidth="2.5"
+                strokeDasharray="6 6"
+              />
+              <circle cx="50" cy="60" r="5" fill="#FF5722" />
+              <circle cx="500" cy="60" r="5" fill="#FF5722" />
+              <circle cx="950" cy="60" r="5" fill="#FF5722" />
+            </svg>
+
+            <div className="process-cards-grid">
+              {/* Card 1 */}
+              <div className="process-card tilt-card-1">
+                <span className="process-step-num">01</span>
+                <h3 className="process-card-title">Input Your Stakes</h3>
+                <p className="process-card-desc">
+                  Enter your current offer, target ambition, hard walk-away number, and alternate options (BATNA).
                 </p>
+                <div className="process-card-pill">Bargaining Audit</div>
               </div>
-              <button className="btn btn-accent" style={{ width: '100%', marginTop: 16 }} onClick={handleDemo}>
-                Try Simulator <ArrowRight size={14} />
-              </button>
+
+              {/* Card 2 */}
+              <div className="process-card tilt-card-2">
+                <span className="process-step-num" style={{ color: '#FF5722' }}>02</span>
+                <h3 className="process-card-title">Formulate The Strategy</h3>
+                <p className="process-card-desc">
+                  DealMind calculates your probability curves, opening anchor, talking points, and concession packages.
+                </p>
+                <div className="process-card-pill" style={{ borderColor: 'rgba(255, 87, 34, 0.3)', color: '#FF5722' }}>
+                  Gemini 2.0 Model
+                </div>
+              </div>
+
+              {/* Card 3 */}
+              <div className="process-card tilt-card-3">
+                <span className="process-step-num">03</span>
+                <h3 className="process-card-title">Roleplay & Close</h3>
+                <p className="process-card-desc">
+                  Enter the simulator arena against realistic counterparties with live coaching before the real deal.
+                </p>
+                <div className="process-card-pill">Simulation Arena</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== CTA SECTION ===== */}
-      <section className="section cta-section" id="about">
-        <div className="container">
-          <div className="cta-inner">
-            <div className="cta-glow" />
-            <p className="section-overline">Get Started</p>
-            <h2 className="display-md">Your next negotiation<br />starts here.</h2>
-            <p className="body-lg text-secondary" style={{ marginTop: 16 }}>
-              Stop leaving money on the table. Build your strategy in minutes.
-            </p>
-            <div className="hero-ctas" style={{ marginTop: 36, justifyContent: 'center' }}>
-              <button className="btn btn-accent btn-lg" onClick={handleStart}>
-                <Zap size={18} />
-                Build My Strategy
-              </button>
-              <button className="btn btn-ghost btn-lg" onClick={handleDemo}>
-                <MessageSquare size={16} />
-                Try Demo First
-              </button>
+      {/* ============================================================
+          CURATED CASE STUDIES & SCENARIOS
+          ============================================================ */}
+      <section id="cases" className="hanzo-section hanzo-cases-section">
+        <div className="hanzo-container">
+          <div className="cases-header">
+            <div>
+              <div className="eyebrow-rule">— Proven High-Stakes Scenarios —</div>
+              <h2 className="section-title">Tested in high-pressure arenas</h2>
+            </div>
+            <button className="btn btn-dark" onClick={handleLaunchDemo}>
+              Explore Arena Presets <ArrowRight size={15} />
+            </button>
+          </div>
+
+          <div className="cases-grid">
+            {CASE_STUDIES.map((cs, idx) => (
+              <div key={idx} className="case-card">
+                <div className="case-card-top">
+                  <span className="badge badge-accent">{cs.tag}</span>
+                  <span className="case-metric-badge text-mono">{cs.metric}</span>
+                </div>
+
+                <h3 className="case-card-title">{cs.title}</h3>
+                <p className="case-card-desc">{cs.description}</p>
+
+                <div className="case-card-footer">
+                  <span className="case-counterparty">Opponent: <strong>{cs.counterparty}</strong></span>
+                  <div className="case-tags">
+                    {cs.tags.map((t, i) => (
+                      <span key={i} className="case-tag-chip">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          ACCESS & PRICING (HANZO INTEGRATED CARD)
+          ============================================================ */}
+      <section id="pricing" className="hanzo-section hanzo-pricing-section">
+        <div className="hanzo-container">
+          <div className="text-center" style={{ marginBottom: 44 }}>
+            <div className="eyebrow-rule">— Transparent Access —</div>
+            <h2 className="section-title">Zero barriers to mastering your leverage</h2>
+            <p className="section-sub">Practice locally in Demo Mode or bring your Google Gemini API key.</p>
+          </div>
+
+          <div className="pricing-card-wrapper">
+            <div className="pricing-card">
+              <div className="pricing-header">
+                <div className="pricing-toggle">
+                  <button
+                    className={`toggle-btn ${pricingPeriod === 'free' ? 'active' : ''}`}
+                    onClick={() => setPricingPeriod('free')}
+                  >
+                    Demo Edition
+                  </button>
+                  <button
+                    className={`toggle-btn ${pricingPeriod === 'pro' ? 'active' : ''}`}
+                    onClick={() => setPricingPeriod('pro')}
+                  >
+                    Gemini Live
+                  </button>
+                </div>
+                <span className="badge badge-emerald">Open & Client-Side</span>
+              </div>
+
+              <div className="pricing-body">
+                <div className="pricing-number-block">
+                  <span className="currency-symbol">{pricingPeriod === 'free' ? '₹' : '$'}</span>
+                  <span className="price-amount">0</span>
+                  <span className="price-period">/ forever free</span>
+                </div>
+                <p className="pricing-tagline">
+                  {pricingPeriod === 'free'
+                    ? 'Instant practice arena with high-fidelity mock AI responses. No registration or API key required.'
+                    : 'Connect your personal Google Gemini 2.0 Flash key directly for unlimited live dynamic AI strategy generation.'}
+                </p>
+
+                <div className="pricing-features-list">
+                  <div className="feature-item">
+                    <span className="feature-check"><Check size={14} /></span>
+                    <span>Full BATNA & opening anchor mathematical models</span>
+                  </div>
+                  <div className="feature-item">
+                    <span className="feature-check"><Check size={14} /></span>
+                    <span>Interactive Roleplay Simulator Arena with 4 opponent temperaments</span>
+                  </div>
+                  <div className="feature-item">
+                    <span className="feature-check"><Check size={14} /></span>
+                    <span>Real-time in-flight executive AI coaching and concession alerts</span>
+                  </div>
+                  <div className="feature-item">
+                    <span className="feature-check"><Check size={14} /></span>
+                    <span>Historical negotiation analytics, score grading, and data export</span>
+                  </div>
+                </div>
+
+                <button className="btn btn-accent btn-lg" style={{ width: '100%', marginTop: 28 }} onClick={handleLaunchDemo}>
+                  Launch DealMind Now <ArrowRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== FOOTER ===== */}
-      <footer className="footer">
-        <div className="container">
+      {/* ============================================================
+          FAQ & FOUNDER CONTACT SPLIT SECTION
+          ============================================================ */}
+      <section id="faq" className="hanzo-section hanzo-faq-section">
+        <div className="hanzo-container">
+          <div className="faq-split-layout">
+            {/* Left Contact Card */}
+            <div className="faq-contact-card">
+              <div className="contact-avatar">👨‍💻</div>
+              <h3 className="contact-title">Have a specific high-stakes deal?</h3>
+              <p className="contact-desc">
+                Need guidance on structuring a complex multi-stakeholder negotiation or customized corporate training?
+              </p>
+              <button className="btn btn-dark" style={{ width: '100%', marginBottom: 14 }} onClick={handleLaunchDemo}>
+                Open Practice Arena →
+              </button>
+              <a href="mailto:aryanlade55@gmail.com" className="contact-email-link">
+                aryanlade55@gmail.com
+              </a>
+            </div>
+
+            {/* Right Accordion List */}
+            <div className="faq-accordion-list">
+              <div className="eyebrow-rule" style={{ marginBottom: 16 }}>— Common Questions —</div>
+              {FAQS.map((faq, idx) => (
+                <div
+                  key={idx}
+                  className={`faq-item ${openFaq === idx ? 'open' : ''}`}
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                >
+                  <div className="faq-question">
+                    <span>{faq.q}</span>
+                    <span className="faq-toggle-icon">
+                      {openFaq === idx ? <Minus size={16} /> : <Plus size={16} />}
+                    </span>
+                  </div>
+                  {openFaq === idx && (
+                    <div className="faq-answer">
+                      <p>{faq.a}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          DARK FOOTER CANVAS (HANZO DEEP CHARCOAL WITH LIGHT RAY)
+          ============================================================ */}
+      <footer className="hanzo-footer">
+        <div className="hanzo-footer-light-ray" />
+        <div className="hanzo-container">
           <div className="footer-top">
-            <div className="footer-brand">
-              <div className="footer-logo">
-                <span className="navbar-logo-icon"><Zap size={16} /></span>
-                <span style={{ fontWeight: 800, fontSize: 18 }}>DealMind</span>
-              </div>
-              <p className="footer-tagline">Know your leverage. Negotiate smarter.</p>
+            <div className="footer-headline">
+              <span className="footer-line-1">Let's</span>
+              <span className="footer-line-2 text-serif">Negotiate.</span>
             </div>
-            <div className="footer-links-grid">
-              <div>
-                <p className="footer-col-title">Product</p>
-                <a href="#how-it-works" className="footer-link">How it Works</a>
-                <a href="#use-cases" className="footer-link">Use Cases</a>
-                <a href="#simulator" className="footer-link">Simulator</a>
-              </div>
-              <div>
-                <p className="footer-col-title">Legal</p>
-                <a href="#" className="footer-link">Privacy</a>
-                <a href="#" className="footer-link">Terms</a>
-              </div>
-              <div>
-                <p className="footer-col-title">Community</p>
-                <a href="https://github.com" target="_blank" className="footer-link">GitHub</a>
-                <a href="#" className="footer-link">Discord</a>
-              </div>
-            </div>
+
+            <button className="btn btn-accent btn-lg footer-cta" onClick={handleLaunchDemo}>
+              Launch DealMind Free <ArrowRight size={16} />
+            </button>
           </div>
+
           <div className="footer-bottom">
-            <p className="body-sm text-muted">© 2024 DealMind. Built with AI at GDG Cloud Nagpur Hackathon.</p>
-            <p className="body-sm text-muted">AI outputs are simulations. Not financial or legal advice.</p>
+            <div className="footer-copy-capsule">
+              <span>© {new Date().getFullYear()} DealMind Studio — Crafted by Aryan Lade</span>
+            </div>
+
+            <div className="footer-links">
+              <a href="https://github.com/Aryan-Lade/DealMind-" target="_blank" rel="noreferrer">
+                GitHub Repository <ExternalLink size={12} />
+              </a>
+              <Link to="/login">Sign In</Link>
+              <Link to="/dashboard">Dashboard</Link>
+            </div>
           </div>
         </div>
       </footer>

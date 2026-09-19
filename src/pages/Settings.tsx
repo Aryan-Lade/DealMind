@@ -159,7 +159,7 @@ export default function Settings() {
           {/* Section 1: AI Provider */}
           <div className="settings-card">
             <div className="settings-card-header">
-              <div className="settings-card-icon" style={{ background: 'rgba(204, 255, 0, 0.1)', color: 'var(--accent)' }}>
+              <div className="settings-card-icon" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
                 <Key size={20} />
               </div>
               <div>

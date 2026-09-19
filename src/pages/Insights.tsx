@@ -7,8 +7,8 @@ import {
 } from 'recharts'
 import './Insights.css'
 
-const ACCENT = '#CCFF00'
-const ACCENT_DIM = 'rgba(204,255,0,0.3)'
+const ACCENT = '#FF5722'
+const ACCENT_DIM = 'rgba(255, 87, 34, 0.3)'
 
 export default function Insights() {
   const { negotiations } = useNegotiations()

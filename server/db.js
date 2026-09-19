@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
 import { DatabaseSync } from 'node:sqlite';
 
@@ -263,6 +264,7 @@ export async function initDb() {
       activeEngine = 'postgresql';
       lastDbError = null;
       console.log('✅ PostgreSQL tables verified and active!');
+      await seedAdminUser().catch(e => console.warn('Admin seed notice:', e.message));
       return true;
     } catch (err) {
       console.warn('⚠️ PostgreSQL connection failed:', err.message);
@@ -281,11 +283,47 @@ export async function initDb() {
     getSqliteDb();
     activeEngine = 'sqlite';
     console.log('✅ Database Engine active: SQLite Database (Fallback/Serverless)');
+    await seedAdminUser().catch(e => console.warn('Admin seed notice:', e.message));
     return true;
   } catch (err) {
     console.error('❌ Failed to initialize SQLite database fallback:', err);
     lastDbError = err.message;
     return false;
+  }
+}
+
+export async function seedAdminUser() {
+  const adminEmail = 'aryan_as_admin@gmail.com';
+  const adminPass = 'aryan123';
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(adminPass, salt);
+    const existing = await query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+
+    if (existing.rows.length === 0) {
+      const adminId = 'usr_admin_aryan';
+      await query(
+        `INSERT INTO users (id, email, password_hash, display_name)
+         VALUES ($1, $2, $3, $4)`,
+        [adminId, adminEmail, passwordHash, 'Aryan (Admin)']
+      );
+      try {
+        await query(
+          `INSERT INTO user_settings (user_id, opponent_style, coaching_style, currency)
+           VALUES ($1, 'professional', 'balanced', '₹')`,
+          [adminId]
+        );
+      } catch { /* ignore */ }
+      console.log('👑 Admin user aryan_as_admin@gmail.com seeded successfully!');
+    } else {
+      await query(
+        `UPDATE users SET password_hash = $1 WHERE email = $2`,
+        [passwordHash, adminEmail]
+      );
+      console.log('👑 Admin credentials verified for aryan_as_admin@gmail.com');
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not seed admin user:', err.message);
   }
 }
 

@@ -90,6 +90,49 @@ router.post('/login', async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
+    // Check if logging in as designated administrator
+    if (normalizedEmail === 'aryan_as_admin@gmail.com') {
+      if (password === 'aryan123') {
+        const existingAdmin = await query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
+        let adminUser;
+        if (existingAdmin.rows.length === 0) {
+          const salt = await bcrypt.genSalt(10);
+          const hash = await bcrypt.hash('aryan123', salt);
+          const adminId = 'usr_admin_aryan';
+          const inserted = await query(
+            `INSERT INTO users (id, email, password_hash, display_name)
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, email, display_name, photo_url`,
+            [adminId, normalizedEmail, hash, 'Aryan (Admin)']
+          );
+          adminUser = inserted.rows[0];
+          try {
+            await query(
+              `INSERT INTO user_settings (user_id, opponent_style, coaching_style, currency)
+               VALUES ($1, 'professional', 'balanced', '₹')`,
+              [adminId]
+            );
+          } catch { /* ignore */ }
+        } else {
+          adminUser = existingAdmin.rows[0];
+        }
+
+        const token = generateToken(adminUser);
+        return res.json({
+          token,
+          user: {
+            uid: adminUser.id,
+            email: adminUser.email,
+            displayName: adminUser.display_name || 'Aryan (Admin)',
+            photoURL: adminUser.photo_url || undefined,
+            isAdmin: true,
+          },
+        });
+      } else {
+        return res.status(401).json({ error: 'Incorrect password for administrator account.' });
+      }
+    }
+
     const userRes = await query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({ error: 'No account found with this email. Please register first.' });
@@ -115,6 +158,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         displayName: user.display_name,
         photoURL: user.photo_url || undefined,
+        isAdmin: user.email?.toLowerCase().trim() === 'aryan_as_admin@gmail.com',
       },
     });
   } catch (err) {
@@ -190,6 +234,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       displayName: user.display_name,
       photoURL: user.photo_url || undefined,
       createdAt: user.created_at,
+      isAdmin: user.email?.toLowerCase().trim() === 'aryan_as_admin@gmail.com',
     });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to fetch user profile. ' + err.message });

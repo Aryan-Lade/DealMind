@@ -11,9 +11,13 @@ import { DEMO_SCENARIOS, MOCK_ANALYSIS } from '../data/mockData'
 import { api } from '../services/api'
 import './Settings.css'
 
+const ADMIN_EMAIL = 'aryan_as_admin@gmail.com'
+
 export default function Settings() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const { negotiations, addNegotiation, syncToCloud, cloudStatus } = useNegotiations()
+
+  const isSuperAdmin = isAdmin || user?.email?.toLowerCase().trim() === ADMIN_EMAIL
 
   const [geminiKey, setGeminiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
@@ -54,9 +58,11 @@ export default function Settings() {
     setCoachingStyle(storedCoach)
     setCurrency(storedCurr)
 
-    // Check DB status
-    checkDatabaseConnection()
-  }, [])
+    // Check DB status only if administrator
+    if (isSuperAdmin) {
+      checkDatabaseConnection()
+    }
+  }, [isSuperAdmin])
 
   const checkDatabaseConnection = async () => {
     setDbState(prev => ({ ...prev, checking: true }))
@@ -79,16 +85,18 @@ export default function Settings() {
   }
 
   const handleSave = () => {
-    if (geminiKey.trim()) {
-      localStorage.setItem('dealmind_gemini_key', geminiKey.trim())
-    } else {
-      localStorage.removeItem('dealmind_gemini_key')
-    }
+    if (isSuperAdmin) {
+      if (geminiKey.trim()) {
+        localStorage.setItem('dealmind_gemini_key', geminiKey.trim())
+      } else {
+        localStorage.removeItem('dealmind_gemini_key')
+      }
 
-    if (apiUrl.trim()) {
-      localStorage.setItem('dealmind_api_url', apiUrl.trim())
-    } else {
-      localStorage.removeItem('dealmind_api_url')
+      if (apiUrl.trim()) {
+        localStorage.setItem('dealmind_api_url', apiUrl.trim())
+      } else {
+        localStorage.removeItem('dealmind_api_url')
+      }
     }
 
     localStorage.setItem('dealmind_pref_opponent', opponentStyle)
@@ -228,179 +236,230 @@ export default function Settings() {
         </div>
 
         <div className="settings-grid">
-          {/* Section 1: PostgreSQL & Railway Database */}
-          <div className="settings-card" style={{ gridColumn: '1 / -1', borderColor: dbState.connected ? 'rgba(34, 197, 94, 0.4)' : undefined }}>
-            <div className="settings-card-header">
-              <div className="settings-card-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
-                <Database size={20} />
+          {/* Admin Banner (Visible only for aryan_as_admin@gmail.com) */}
+          {isSuperAdmin && (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.12), rgba(249, 115, 22, 0.08))',
+                border: '1px solid rgba(234, 179, 8, 0.35)',
+                borderRadius: '16px',
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                marginBottom: 4,
+              }}
+            >
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  background: 'rgba(234, 179, 8, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EAB308',
+                  flexShrink: 0,
+                }}
+              >
+                <Shield size={22} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                  <h2 className="settings-card-title">PostgreSQL Database (Railway)</h2>
-                  {dbState.checking ? (
-                    <span className="badge badge-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <RefreshCw size={12} className="spin" /> Checking Connection...
-                    </span>
-                  ) : dbState.connected ? (
-                    <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(34, 197, 94, 0.2)', color: '#22C55E' }}>
-                      <Cloud size={13} /> Connected & Synchronized (SSL)
-                    </span>
-                  ) : (
-                    <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CloudOff size={13} /> Local Mode / Standalone
-                    </span>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#EAB308' }}>
+                    Administrator Infrastructure Panel
+                  </h3>
+                  <span className="badge" style={{ background: '#EAB308', color: '#000', fontWeight: 700, fontSize: 11 }}>
+                    ARYAN (ADMIN)
+                  </span>
                 </div>
-                <p className="text-secondary text-sm" style={{ marginTop: 4 }}>
-                  All negotiations, AI strategy matrices, and user chat transcripts are saved to PostgreSQL with user isolation.
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+                  PostgreSQL database targets, synchronization controls, and Google Gemini AI API credentials are exclusively accessible to {ADMIN_EMAIL}.
                 </p>
               </div>
             </div>
+          )}
 
-            <div className="settings-body">
-              <div className="settings-info-row">
-                <span className="text-secondary">Database Target:</span>
-                <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--text-primary)' }}>
-                  {dbState.preview || 'postgresql://${{PGUSER}}:${{PGPASSWORD}}@${{RAILWAY_TCP_PROXY_DOMAIN}}:${{RAILWAY_TCP_PROXY_PORT}}/${{PGDATABASE}}'}
-                </span>
-              </div>
-              <div className="settings-info-row">
-                <span className="text-secondary">Active Persistence:</span>
-                <span>
-                  {dbState.connected ? (
-                    <strong style={{ color: '#22C55E' }}>PostgreSQL Cloud Tables (users, negotiations, user_settings)</strong>
-                  ) : (
-                    <span style={{ color: 'var(--text-muted)' }}>Local Cache (Connect backend to persist in PostgreSQL)</span>
+          {/* Section 1 & Section 2: HIDDEN for normal users, only visible for Admin */}
+          {isSuperAdmin && (
+            <>
+              {/* Section 1: PostgreSQL & Railway/Neon Database */}
+              <div className="settings-card" style={{ gridColumn: '1 / -1', borderColor: dbState.connected ? 'rgba(34, 197, 94, 0.4)' : undefined }}>
+                <div className="settings-card-header">
+                  <div className="settings-card-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
+                    <Database size={20} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <h2 className="settings-card-title">PostgreSQL Database (Neon / Railway)</h2>
+                      {dbState.checking ? (
+                        <span className="badge badge-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <RefreshCw size={12} className="spin" /> Checking Connection...
+                        </span>
+                      ) : dbState.connected ? (
+                        <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(34, 197, 94, 0.2)', color: '#22C55E' }}>
+                          <Cloud size={13} /> Connected & Synchronized (SSL)
+                        </span>
+                      ) : (
+                        <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <CloudOff size={13} /> Local Mode / Standalone
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-secondary text-sm" style={{ marginTop: 4 }}>
+                      All negotiations, AI strategy matrices, and user chat transcripts are saved to PostgreSQL with user isolation.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="settings-body">
+                  <div className="settings-info-row">
+                    <span className="text-secondary">Database Target:</span>
+                    <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--text-primary)' }}>
+                      {dbState.preview || 'postgresql://${{PGUSER}}:${{PGPASSWORD}}@${{RAILWAY_TCP_PROXY_DOMAIN}}:${{RAILWAY_TCP_PROXY_PORT}}/${{PGDATABASE}}'}
+                    </span>
+                  </div>
+                  <div className="settings-info-row">
+                    <span className="text-secondary">Active Persistence:</span>
+                    <span>
+                      {dbState.connected ? (
+                        <strong style={{ color: '#22C55E' }}>PostgreSQL Cloud Tables (users, negotiations, user_settings)</strong>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>Local Cache (Connect backend to persist in PostgreSQL)</span>
+                      )}
+                    </span>
+                  </div>
+                  {dbState.error && (
+                    <div className="settings-info-row" style={{ alignItems: 'flex-start' }}>
+                      <span className="text-secondary">Connection Note:</span>
+                      <span style={{ color: '#F59E0B', fontSize: 12 }}>{dbState.error}</span>
+                    </div>
                   )}
-                </span>
-              </div>
-              {dbState.error && (
-                <div className="settings-info-row" style={{ alignItems: 'flex-start' }}>
-                  <span className="text-secondary">Connection Note:</span>
-                  <span style={{ color: '#F59E0B', fontSize: 12 }}>{dbState.error}</span>
-                </div>
-              )}
 
-              <div className="settings-action-row" style={{ marginTop: 16 }}>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={checkDatabaseConnection}
-                  disabled={dbState.checking}
-                >
-                  <RefreshCw size={14} className={dbState.checking ? 'spin' : ''} />
-                  Test Database Connection
-                </button>
+                  <div className="settings-action-row" style={{ marginTop: 16 }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={checkDatabaseConnection}
+                      disabled={dbState.checking}
+                    >
+                      <RefreshCw size={14} className={dbState.checking ? 'spin' : ''} />
+                      Test Database Connection
+                    </button>
 
-                {user && (
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={handleSyncCloud}
-                    disabled={syncStatus === 'syncing'}
-                  >
-                    <ArrowUpCircle size={14} className={syncStatus === 'syncing' ? 'spin' : ''} />
-                    Sync Local Data to Database
-                  </button>
-                )}
+                    {user && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={handleSyncCloud}
+                        disabled={syncStatus === 'syncing'}
+                      >
+                        <ArrowUpCircle size={14} className={syncStatus === 'syncing' ? 'spin' : ''} />
+                        Sync Local Data to Database
+                      </button>
+                    )}
 
-                {syncStatus === 'success' && (
-                  <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircle2 size={13} /> {syncMsg}
-                  </span>
-                )}
-                {syncStatus === 'error' && (
-                  <span className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <AlertCircle size={13} /> {syncMsg}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: AI Provider */}
-          <div className="settings-card">
-            <div className="settings-card-header">
-              <div className="settings-card-icon" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
-                <Key size={20} />
-              </div>
-              <div>
-                <h2 className="settings-card-title">Google Gemini AI</h2>
-                <p className="text-secondary text-sm">Provide your own key for live AI coaching & strategy generation</p>
-              </div>
-            </div>
-
-            <div className="settings-body">
-              <div className="form-group">
-                <label className="form-label">Gemini API Key</label>
-                <div className="input-wrapper">
-                  <input
-                    type={showKey ? 'text' : 'password'}
-                    className="form-input input-with-right-icon"
-                    placeholder="AIzaSy..."
-                    value={geminiKey}
-                    onChange={e => setGeminiKey(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="input-right-icon"
-                    onClick={() => setShowKey(!showKey)}
-                    title={showKey ? 'Hide key' : 'Show key'}
-                  >
-                    {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                <span className="text-muted text-xs" style={{ display: 'block', marginTop: 6 }}>
-                  Get your free Gemini API key from{' '}
-                  <a
-                    href="https://aistudio.google.com/app/apikey"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'var(--accent)', textDecoration: 'underline' }}
-                  >
-                    Google AI Studio
-                  </a>. If left blank, DealMind runs in high-fidelity Demo Mode.
-                </span>
-              </div>
-
-              <div className="settings-action-row">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={handleTestKey}
-                  disabled={testStatus === 'testing'}
-                >
-                  <RefreshCw size={14} className={testStatus === 'testing' ? 'spin' : ''} />
-                  {testStatus === 'testing' ? 'Testing Connection...' : 'Test API Key'}
-                </button>
-
-                {testStatus === 'success' && (
-                  <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircle2 size={13} /> {testMessage}
-                  </span>
-                )}
-
-                {testStatus === 'error' && (
-                  <span className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <AlertCircle size={13} /> {testMessage}
-                  </span>
-                )}
-              </div>
-
-              <div className="form-group" style={{ marginTop: 20 }}>
-                <label className="form-label">Backend API URL (Optional)</label>
-                <div className="input-wrapper">
-                  <input
-                    type="url"
-                    className="form-input"
-                    placeholder="Leave empty for local dev (proxies automatically to /api)"
-                    value={apiUrl}
-                    onChange={e => setApiUrl(e.target.value)}
-                  />
+                    {syncStatus === 'success' && (
+                      <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <CheckCircle2 size={13} /> {syncMsg}
+                      </span>
+                    )}
+                    {syncStatus === 'error' && (
+                      <span className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <AlertCircle size={13} /> {syncMsg}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+
+              {/* Section 2: AI Provider & Backend URL */}
+              <div className="settings-card" style={{ gridColumn: '1 / -1' }}>
+                <div className="settings-card-header">
+                  <div className="settings-card-icon" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                    <Key size={20} />
+                  </div>
+                  <div>
+                    <h2 className="settings-card-title">Google Gemini AI & Backend Configuration</h2>
+                    <p className="text-secondary text-sm">Provide your own key for live AI coaching & strategy generation</p>
+                  </div>
+                </div>
+
+                <div className="settings-body">
+                  <div className="form-group">
+                    <label className="form-label">Gemini API Key</label>
+                    <div className="input-wrapper">
+                      <input
+                        type={showKey ? 'text' : 'password'}
+                        className="form-input input-with-right-icon"
+                        placeholder="AIzaSy..."
+                        value={geminiKey}
+                        onChange={e => setGeminiKey(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="input-right-icon"
+                        onClick={() => setShowKey(!showKey)}
+                        title={showKey ? 'Hide key' : 'Show key'}
+                      >
+                        {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    <span className="text-muted text-xs" style={{ display: 'block', marginTop: 6 }}>
+                      Get your free Gemini API key from{' '}
+                      <a
+                        href="https://aistudio.google.com/app/apikey"
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: 'var(--accent)', textDecoration: 'underline' }}
+                      >
+                        Google AI Studio
+                      </a>. If left blank, DealMind runs in high-fidelity Demo Mode.
+                    </span>
+                  </div>
+
+                  <div className="settings-action-row">
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={handleTestKey}
+                      disabled={testStatus === 'testing'}
+                    >
+                      <RefreshCw size={14} className={testStatus === 'testing' ? 'spin' : ''} />
+                      {testStatus === 'testing' ? 'Testing Connection...' : 'Test API Key'}
+                    </button>
+
+                    {testStatus === 'success' && (
+                      <span className="badge badge-accent" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <CheckCircle2 size={13} /> {testMessage}
+                      </span>
+                    )}
+
+                    {testStatus === 'error' && (
+                      <span className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <AlertCircle size={13} /> {testMessage}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: 20 }}>
+                    <label className="form-label">Backend API URL (Optional)</label>
+                    <div className="input-wrapper">
+                      <input
+                        type="url"
+                        className="form-input"
+                        placeholder="Leave empty for local dev (proxies automatically to /api)"
+                        value={apiUrl}
+                        onChange={e => setApiUrl(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Section 3: Simulator & Persona */}
           <div className="settings-card">
@@ -541,6 +600,35 @@ export default function Settings() {
               </div>
             </div>
           </div>
+
+          {/* Non-admin Notice */}
+          {!isSuperAdmin && (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                marginTop: 8,
+                padding: '16px 20px',
+                borderRadius: '14px',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+                fontSize: 13,
+                color: 'var(--text-muted)',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Shield size={16} style={{ color: 'var(--text-muted)' }} />
+                Cloud database and AI infrastructure settings are restricted to system administrators ({ADMIN_EMAIL}).
+              </span>
+              <a href="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
+                Admin Sign In →
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

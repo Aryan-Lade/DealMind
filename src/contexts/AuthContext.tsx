@@ -6,12 +6,14 @@ export interface User {
   email: string
   displayName: string
   photoURL?: string
+  isAdmin?: boolean
 }
 
 interface AuthContextType {
   user: User | null
   loading: boolean
   isDemo: boolean
+  isAdmin: boolean
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>
@@ -116,11 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('dealmind_demo')
   }
 
+  const isAdmin = user?.email?.toLowerCase().trim() === 'aryan_as_admin@gmail.com' || Boolean(user?.isAdmin)
+
   return (
     <AuthContext.Provider value={{
       user,
       loading,
       isDemo: false,
+      isAdmin,
       signInWithGoogle,
       signInWithEmail,
       signUpWithEmail,

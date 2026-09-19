@@ -5,7 +5,7 @@ import {
   Building2, HelpCircle, ArrowRight, ArrowLeft, Zap, Check
 } from 'lucide-react'
 import { useNegotiations } from '../contexts/NegotiationContext'
-import { analyzeNegotiation } from '../../DealMind-/services/aiService'
+import { analyzeNegotiation } from '../services/aiService'
 import { DEMO_SCENARIOS } from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
 import './NewNegotiation.css'

@@ -32,64 +32,124 @@ export interface AnalysisRequest {
   relationship: string
 }
 
-const AVAILABLE_GEMINI_MODELS = [
-  'gemini-3.5-flash',
-  'gemini-3.6-flash',
-  'gemini-flash-latest',
+export interface GeminiCallOptions {
+  maxOutputTokens?: number
+  temperature?: number
+  responseMimeType?: string
+  timeoutMs?: number
+}
+
+export interface SimulatorTurnResult {
+  opponentResponse: string
+  coaching: {
+    assessment: 'good' | 'improve' | 'warning'
+    feedback: string
+    suggestion: string
+  }
+}
+
+// Healthy, ultra-low latency models verified to work on current API quotas
+const CANDIDATE_GEMINI_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
   'gemini-3.7-flash',
-  'gemini-3.5-flash-lite'
+  'gemini-3-flash-preview',
 ]
 
-async function callGeminiDirect(
+// In-memory blacklist for 429/503 errors (3 minute cooldown)
+const modelBlacklist = new Map<string, number>()
+let lastWorkingModel: string = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('dealmind_active_model')) || 'gemini-3.1-flash-lite'
+
+function getHealthyModels(): string[] {
+  const now = Date.now()
+  for (const [m, expire] of modelBlacklist.entries()) {
+    if (now > expire) modelBlacklist.delete(m)
+  }
+
+  const healthy = CANDIDATE_GEMINI_MODELS.filter(m => !modelBlacklist.has(m))
+  const pool = healthy.length > 0 ? healthy : CANDIDATE_GEMINI_MODELS
+
+  // Put last working model first if healthy
+  return [lastWorkingModel, ...pool.filter(m => m !== lastWorkingModel)]
+}
+
+export async function callGeminiDirect(
   prompt: string,
-  modelIndex: number = 0,
+  optionsOrModelIndex?: GeminiCallOptions | number,
   responseMimeType?: string
 ): Promise<string> {
   const key = getGeminiKey()
   if (!key) throw new Error('Gemini API key is not configured')
 
-  const model = AVAILABLE_GEMINI_MODELS[modelIndex] || 'gemini-3.5-flash'
+  const opts: GeminiCallOptions = typeof optionsOrModelIndex === 'object' && optionsOrModelIndex !== null
+    ? optionsOrModelIndex
+    : { responseMimeType: responseMimeType || (typeof optionsOrModelIndex === 'string' ? optionsOrModelIndex : undefined) }
 
-  try {
-    const generationConfig: any = {
-      temperature: 0.7,
-      topP: 0.8,
-      maxOutputTokens: 8192,
-    }
-    if (responseMimeType) {
-      generationConfig.responseMimeType = responseMimeType
-    }
+  const models = getHealthyModels()
+  let lastErr: any = null
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig,
-        }),
+  for (const model of models) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), opts.timeoutMs || 6500)
+
+      const generationConfig: any = {
+        temperature: opts.temperature ?? 0.7,
+        topP: 0.8,
+        maxOutputTokens: opts.maxOutputTokens || 350,
       }
-    )
-
-    if (!response.ok) {
-      if (modelIndex + 1 < AVAILABLE_GEMINI_MODELS.length) {
-        console.warn(`Gemini model ${model} returned ${response.status}. Retrying with next model...`)
-        return callGeminiDirect(prompt, modelIndex + 1, responseMimeType)
+      if (opts.responseMimeType) {
+        generationConfig.responseMimeType = opts.responseMimeType
       }
-      throw new Error(`Gemini API error: ${response.status}`)
-    }
 
-    const data = await response.json()
-    const parts = data.candidates?.[0]?.content?.parts || []
-    return parts.map((p: any) => p.text || '').join('').trim()
-  } catch (err) {
-    if (modelIndex + 1 < AVAILABLE_GEMINI_MODELS.length) {
-      console.warn(`Gemini request failed on ${model}. Retrying with next model...`)
-      return callGeminiDirect(prompt, modelIndex + 1, responseMimeType)
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig,
+          }),
+          signal: controller.signal,
+        }
+      )
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        if (response.status === 429 || response.status === 503) {
+          modelBlacklist.set(model, Date.now() + 3 * 60 * 1000)
+        }
+        console.warn(`Gemini model ${model} returned status ${response.status}. Trying next candidate...`)
+        continue
+      }
+
+      const data = await response.json()
+      const parts = data.candidates?.[0]?.content?.parts || []
+      const text = parts.map((p: any) => p.text || '').join('').trim()
+
+      if (text) {
+        lastWorkingModel = model
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('dealmind_active_model', model)
+          }
+        } catch {}
+        return text
+      }
+    } catch (err: any) {
+      lastErr = err
+      if (err.name === 'AbortError') {
+        modelBlacklist.set(model, Date.now() + 2 * 60 * 1000)
+        console.warn(`Gemini call on ${model} timed out. Trying next candidate...`)
+      } else {
+        console.warn(`Gemini call on ${model} failed: ${err.message}. Trying next candidate...`)
+      }
     }
-    throw err
   }
+
+  throw lastErr || new Error('All Gemini models exhausted or unavailable')
 }
 
 function parseJsonFromText(text: string): any {
@@ -108,8 +168,8 @@ function parseJsonFromText(text: string): any {
 
 export async function analyzeNegotiation(req: AnalysisRequest): Promise<NegotiationAnalysis> {
   if (shouldUseMock()) {
-    // Simulate AI thinking time with progressive steps
-    await delay(3500)
+    // Fast mock response
+    await delay(1000)
 
     // Customize mock based on request
     const ratio = req.desiredOffer / req.currentOffer
@@ -184,7 +244,11 @@ Return ONLY a valid JSON object matching this schema:
 }`
 
   try {
-    const text = await callGeminiDirect(prompt, 0, 'application/json')
+    const text = await callGeminiDirect(prompt, {
+      maxOutputTokens: 1800,
+      responseMimeType: 'application/json',
+      timeoutMs: 8500
+    })
     const parsed = parseJsonFromText(text)
     if (parsed && typeof parsed.leverage_score === 'number') {
       return parsed
@@ -209,6 +273,100 @@ Return ONLY a valid JSON object matching this schema:
   }
 }
 
+/**
+ * Unified turn generator: fetches both opponent's counter and coach evaluation
+ * in a single ultra-fast network trip.
+ */
+export async function getSimulatorTurn(
+  context: string,
+  userMessage: string,
+  conversationHistory: string,
+  opponentStyle: string,
+  negotiationData: any
+): Promise<SimulatorTurnResult> {
+  if (shouldUseMock()) {
+    await delay(350)
+    const responses = MOCK_OPPONENT_RESPONSES[opponentStyle] || MOCK_OPPONENT_RESPONSES.professional
+    const oppResponse = responses[Math.floor(Math.random() * responses.length)]
+    
+    let assessment: 'good' | 'improve' | 'warning' = 'improve'
+    let feedback = 'Keep focusing on your target value and leverage.'
+    let suggestion = `Protect your target of ₹${(negotiationData.target_offer || negotiationData.desiredOffer || 0).toLocaleString()} and use trade-offs.`
+    
+    const msg = userMessage.toLowerCase()
+    if (msg.includes('offer') || msg.includes('lpa') || msg.includes('salary') || msg.includes('₹') || /\d+/.test(msg)) {
+      assessment = 'good'
+      feedback = 'You stated a specific anchor or numerical position.'
+      suggestion = 'If they push back on this figure, ask what concessions would bridge the gap.'
+    } else if (msg.includes('okay') || msg.includes('fine') || msg.includes('agree') || msg.includes('accept')) {
+      assessment = 'warning'
+      feedback = 'Careful not to concede without extracting reciprocal value.'
+      suggestion = 'Pair any concession with a counter-ask (e.g. tenure, payment schedule, or perks).'
+    }
+
+    return {
+      opponentResponse: oppResponse,
+      coaching: { assessment, feedback, suggestion }
+    }
+  }
+
+  if (getGeminiKey()) {
+    const prompt = `You are DealMind's negotiation simulation engine.
+Scenario context: ${context}
+Negotiation type: ${negotiationData.type || 'general'}
+Current negotiation state: ${JSON.stringify(negotiationData)}
+Opponent style: ${opponentStyle} (friendly / professional / firm / aggressive)
+
+Recent conversation history:
+${conversationHistory}
+
+User just said: "${userMessage}"
+
+Generate BOTH the opponent's immediate reply and the real-time AI coach feedback.
+Respond ONLY with a valid JSON object matching this schema:
+{
+  "opponent_response": "<in character as ${opponentStyle} opponent, under 3 sentences, realistic counter-offer or firm stance>",
+  "assessment": "good|improve|warning",
+  "feedback": "<1 concise sentence assessing the user's tactical move>",
+  "suggestion": "<1-2 concise actionable sentences advising user on what to do next>"
+}`
+
+    try {
+      const text = await callGeminiDirect(prompt, {
+        maxOutputTokens: 320,
+        responseMimeType: 'application/json',
+        timeoutMs: 6000,
+      })
+      const parsed = parseJsonFromText(text)
+      if (parsed && parsed.opponent_response) {
+        return {
+          opponentResponse: parsed.opponent_response,
+          coaching: {
+            assessment: (['good', 'improve', 'warning'].includes(parsed.assessment) ? parsed.assessment : 'improve') as any,
+            feedback: parsed.feedback || 'Evaluate their counter-offer carefully.',
+            suggestion: parsed.suggestion || 'Frame your next reply around your target value.'
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Fast unified turn failed, using instant smart fallback:', err)
+    }
+  }
+
+  // Instant graceful fallback
+  const responses = MOCK_OPPONENT_RESPONSES[opponentStyle] || MOCK_OPPONENT_RESPONSES.professional
+  const oppResponse = responses[Math.floor(Math.random() * responses.length)]
+  const coach = COACHING_RESPONSES[Math.floor(Math.random() * COACHING_RESPONSES.length)]
+  return {
+    opponentResponse: oppResponse,
+    coaching: {
+      assessment: coach.assessment,
+      feedback: coach.feedback,
+      suggestion: coach.suggestion
+    }
+  }
+}
+
 export async function getOpponentResponse(
   context: string,
   userMessage: string,
@@ -217,7 +375,7 @@ export async function getOpponentResponse(
   negotiationData: any
 ): Promise<string> {
   if (shouldUseMock()) {
-    await delay(1200)
+    await delay(350)
     const responses = MOCK_OPPONENT_RESPONSES[opponentStyle] || MOCK_OPPONENT_RESPONSES.professional
     const idx = Math.floor(Math.random() * responses.length)
     return responses[idx]
@@ -232,12 +390,12 @@ Their opening: ${negotiationData.currentOffer}
 Conversation so far:
 ${conversationHistory}
 
-User just said: "${userMessage}"
+User just said: "${userMessage || 'Let us begin the discussion.'}"
 
 Respond as the opponent would. Be ${opponentStyle}. Keep response under 3 sentences. Make a specific counter-offer if appropriate. Be realistic.`
 
     try {
-      return await callGeminiDirect(prompt)
+      return await callGeminiDirect(prompt, { maxOutputTokens: 250, timeoutMs: 5500 })
     } catch {
       const responses = MOCK_OPPONENT_RESPONSES[opponentStyle] || MOCK_OPPONENT_RESPONSES.professional
       return responses[Math.floor(Math.random() * responses.length)]
@@ -254,9 +412,9 @@ export async function getCoachingAdvice(
   negotiationData: any
 ): Promise<{ assessment: 'good' | 'improve' | 'warning'; feedback: string; suggestion: string }> {
   if (shouldUseMock()) {
-    await delay(800)
+    await delay(250)
     const msg = userMessage.toLowerCase()
-    if (msg.includes('offer') || msg.includes('lpa') || msg.includes('salary')) {
+    if (msg.includes('offer') || msg.includes('lpa') || msg.includes('salary') || msg.includes('₹') || /\d+/.test(msg)) {
       return {
         assessment: 'good',
         feedback: 'You clearly stated your position with a specific number.',
@@ -290,7 +448,7 @@ Briefly assess the user's message and provide coaching. Return ONLY JSON:
   "suggestion": "<1-2 sentence actionable suggestion for next move>"
 }`
     try {
-      const text = await callGeminiDirect(prompt)
+      const text = await callGeminiDirect(prompt, { maxOutputTokens: 200, responseMimeType: 'application/json', timeoutMs: 5000 })
       return parseJsonFromText(text)
     } catch {
       return { assessment: 'improve', feedback: 'Keep focusing on your target.', suggestion: 'Reference your BATNA to strengthen your position.' }

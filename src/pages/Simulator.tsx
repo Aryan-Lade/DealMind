@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Brain, Send, Check, AlertTriangle, Zap, Flag, TrendingUp, ArrowRight } from 'lucide-react'
 import { useNegotiations } from '../contexts/NegotiationContext'
-import { getOpponentResponse, getCoachingAdvice, getFinalAnalysis } from '../services/aiService'
+import { getOpponentResponse, getCoachingAdvice, getFinalAnalysis, getSimulatorTurn } from '../services/aiService'
 import { formatCurrency } from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
 import './Simulator.css'
@@ -130,14 +130,17 @@ export default function Simulator() {
     // Build conversation history
     const history = messages.map(m => `${m.role}: ${m.content}`).join('\n')
 
-    // Get opponent response
-    const oppResponse = await getOpponentResponse(
+    // Accelerated single-trip opponent counter & coaching advice
+    const turn = await getSimulatorTurn(
       neg?.context || '',
       msg,
       history,
       opponentStyle,
       { ...analysis, currentOffer: currentOppOffer, type: neg?.type }
     )
+
+    const oppResponse = turn.opponentResponse
+    const coaching = turn.coaching
 
     // Parse opponent's offer
     const oppMatch = oppResponse.match(/₹?([\d,.]+)\s*(lpa|l|lac|lakh|k)?/i)
@@ -151,9 +154,6 @@ export default function Simulator() {
         setConcessions(prev => [...prev, { role: 'opponent', offer, round: Math.ceil(prev.length / 2) }])
       }
     }
-
-    // Get coaching
-    const coaching = await getCoachingAdvice(msg, oppResponse, analysis)
 
     const oppMsg = { role: 'opponent' as const, content: oppResponse }
     const coachMsg = { role: 'coach' as const, content: '', coaching }
